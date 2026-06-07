@@ -5,6 +5,37 @@ import { google } from "googleapis";
 import GmailToken from "../models/GmailToken.js";
 import { createOAuthClient } from "./gmailOAuth.service.js";
 
+const escapeHtml = (text = "") => {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+const formatEmailHtml = (body = "") => {
+  return `
+    <div style="font-family: Arial, sans-serif; font-size: 15px; line-height: 1.7; color: #111827;">
+      ${String(body)
+        .split(/\n\s*\n/)
+        .map((paragraph) => {
+          const safeParagraph = escapeHtml(paragraph).replace(/\n/g, "<br />");
+          return `<p style="margin: 0 0 14px;">${safeParagraph}</p>`;
+        })
+        .join("")}
+    </div>
+  `;
+};
+
+const sanitizeSubject = (subject = "") => {
+  return String(subject)
+    .replace(/–/g, "-")
+    .replace(/—/g, "-")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'");
+};
+
 const makeBody = ({
   to,
   from,
@@ -14,16 +45,12 @@ const makeBody = ({
   attachmentName,
 }) => {
   const boundary = "boundary_" + Date.now();
-  const sanitizeSubject = (subject) => {
-    return subject
-      .replace(/–/g, "-")
-      .replace(/—/g, "-")
-      .replace(/[“”]/g, '"')
-      .replace(/[‘’]/g, "'");
-  };
-  const attachment = fs.readFileSync(attachmentPath).toString("base64");
-  const safeSubject = sanitizeSubject(subject);
 
+  const safeSubject = sanitizeSubject(subject);
+  const htmlBody = Buffer.from(formatEmailHtml(body), "utf-8").toString(
+    "base64",
+  );
+  const attachment = fs.readFileSync(attachmentPath).toString("base64");
 
   const messageParts = [
     `From: ${from}`,
@@ -33,10 +60,10 @@ const makeBody = ({
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "",
     `--${boundary}`,
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: 7bit",
+    "Content-Type: text/html; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
     "",
-    body,
+    htmlBody,
     "",
     `--${boundary}`,
     `Content-Type: application/pdf; name="${attachmentName}"`,
@@ -48,7 +75,7 @@ const makeBody = ({
     `--${boundary}--`,
   ];
 
-  const message = messageParts.join("\n");
+  const message = messageParts.join("\r\n");
 
   return Buffer.from(message)
     .toString("base64")
