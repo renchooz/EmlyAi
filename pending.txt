@@ -4,7 +4,8 @@ Rate Limiting
 **issues**
 
 mobile view of dashbord 
-after email connect it redirects to / page it should be on /dashbord **solved
-cant open resume preview not working in prod but working of local redirects to website again *fixed*
+after email connect it redirects to / page it should be on /dashbord **solved👍
+cant open resume preview not working in prod but working of local redirects to website again *fixed👍*
 cant see email history page on mobile
-cover letter copy button is not working on prod ec2 but working on local
+cover letter copy button is not working on prod ec2 but working on local *due to http fixed👍*
+email format

@@ -1,17 +1,15 @@
-import { LogOut, User } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const Navbar = () => {
-  const { user, logout } = useAuth();
+const Navbar = ({ onMenuClick }) => {
+  const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80 px-4 py-4 backdrop-blur md:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-400">
-            Welcome back,
-          </p>
-          <h2 className="text-lg font-semibold">
+          <p className="text-sm text-slate-400">Welcome back,</p>
+          <h2 className="text-lg font-semibold text-white">
             {user?.name || "User"}
           </h2>
         </div>
@@ -23,11 +21,10 @@ const Navbar = () => {
           </div>
 
           <button
-            onClick={logout}
-            className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/20"
+            onClick={onMenuClick}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition hover:bg-white/10 lg:hidden"
           >
-            <LogOut size={16} />
-            Logout
+            <Menu size={22} />
           </button>
         </div>
       </div>
