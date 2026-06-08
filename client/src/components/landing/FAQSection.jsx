@@ -5,14 +5,14 @@ import { cn } from "../../lib/utils";
 
 const faqs = [
   {
-    question: "Does ApplyPilot AI send emails from my Gmail?",
+    question: "Does EmlyAi send emails from my Gmail?",
     answer:
       "Yes. Once you connect Gmail using Google OAuth, emails are sent from your own Gmail account with your selected resume attached.",
   },
   {
     question: "Do I need to create a Gmail app password?",
     answer:
-      "No. ApplyPilot AI uses Google OAuth, so users do not need to enable app passwords or change Gmail settings.",
+      "No. EmlyAi uses Google OAuth, so users do not need to enable app passwords or change Gmail settings.",
   },
   {
     question: "Can I upload multiple resumes?",

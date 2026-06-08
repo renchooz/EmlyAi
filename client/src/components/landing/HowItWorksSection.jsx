@@ -56,7 +56,7 @@ const HowItWorksSection = () => {
           </h2>
 
           <p className="mt-4 text-slate-400">
-            ApplyPilot AI connects resume analysis, email generation and Gmail
+            EmlyAi connects resume analysis, email generation and Gmail
             sending into one simple workflow.
           </p>
         </div>

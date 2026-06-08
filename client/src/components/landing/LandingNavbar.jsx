@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, Sparkles } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -40,7 +40,7 @@ const LandingNavbar = () => {
                 <Sparkles size={20} />
               </div>
               <span className="text-xl font-bold text-white">
-                ApplyPilot AI
+                EmlyAi
               </span>
             </Link>
 
@@ -71,34 +71,85 @@ const LandingNavbar = () => {
 
             <button
               onClick={() => setIsOpen((prev) => !prev)}
-              className="rounded-lg p-2 text-white hover:bg-white/10 md:hidden"
+              aria-expanded={isOpen}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              className="rounded-lg p-2 text-white transition-colors hover:bg-white/10 md:hidden"
             >
-              {isOpen ? <X /> : <Menu />}
+              <AnimatePresence mode="wait" initial={false}>
+                {isOpen ? (
+                  <motion.span
+                    key="close"
+                    initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="inline-flex"
+                  >
+                    <X />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="menu"
+                    initial={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="inline-flex"
+                  >
+                    <Menu />
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           </div>
 
-          {isOpen && (
-            <div className="mt-4 border-t border-white/10 pt-4 md:hidden">
-              <div className="flex flex-col gap-4">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className="text-sm text-slate-300"
+          <AnimatePresence initial={false}>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="overflow-hidden md:hidden"
+              >
+                <div className="mt-4 border-t border-white/10 pt-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, delay: 0.05 }}
+                    className="flex flex-col gap-4"
                   >
-                    {link.label}
-                  </a>
-                ))}
+                    {navLinks.map((link, index) => (
+                      <motion.a
+                        key={link.label}
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: 0.08 + index * 0.05 }}
+                        className="text-sm text-slate-300 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                      </motion.a>
+                    ))}
 
-                <Link to="/login">
-                  <Button className="w-full">
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: 0.2 }}
+                    >
+                      <Link to="/login" onClick={() => setIsOpen(false)}>
+                        <Button className="w-full">
+                          Get Started
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </nav>
       </div>
     </motion.header>
