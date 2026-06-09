@@ -73,7 +73,7 @@ ${resumeText}
 
 JOB DESCRIPTION:
 ${jobDescription}
-Do not include placeholder links like [LinkedIn Profile Link] or [GitHub Profile Link]. Only include links if they are present in the resume text. `;
+Do not include placeholder links like [LinkedIn Profile Link] or [GitHub Profile Link]. Only include links if they are present in the resume text. and Do not use markdown formatting like **bold**, bullet markdown, or headings. Return plain professional email text only. `;
 
   const result = await getModel().generateContent(prompt);
 
@@ -154,7 +154,7 @@ ${JSON.stringify(resumeData, null, 2)}
 
 JOB DESCRIPTION:
 ${jobDescription}
-`;
+  `;
 
   const result = await getModel().generateContent(prompt);
 

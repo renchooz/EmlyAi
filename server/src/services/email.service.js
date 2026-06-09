@@ -20,7 +20,10 @@ const formatEmailHtml = (body = "") => {
       ${String(body)
         .split(/\n\s*\n/)
         .map((paragraph) => {
-          const safeParagraph = escapeHtml(paragraph).replace(/\n/g, "<br />");
+          const safeParagraph = escapeHtml(paragraph)
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\n/g, "<br />");
+
           return `<p style="margin: 0 0 14px;">${safeParagraph}</p>`;
         })
         .join("")}
