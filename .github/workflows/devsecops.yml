@@ -1,6 +1,4 @@
 name: DevSecOps Pipeline
-
-
 on:
   push:
     branches:
@@ -14,10 +12,10 @@ jobs:
 
   build_push:
     needs: security
-    uses: ./.github/workflows/build-push.yml
+    uses: ./.github/workflows/push.yml
     secrets: inherit
 
   deploy:
     needs: build_push
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/deploy-ec2.yml
     secrets: inherit      
