@@ -7,15 +7,18 @@ on:
 jobs:
   security:
     uses: ./.github/workflows/security.yml
-    secrets: inherit  
-    # inherit means pass all envs from parents to child
+    secrets: inherit
 
   build_push:
     needs: security
     uses: ./.github/workflows/push.yml
+    with:
+      image_tag: ${{ github.sha }}
     secrets: inherit
 
   deploy:
     needs: build_push
     uses: ./.github/workflows/deploy-ec2.yml
-    secrets: inherit      
+    with:
+      image_tag: ${{ github.sha }}
+    secrets: inherit

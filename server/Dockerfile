@@ -15,6 +15,9 @@ WORKDIR /app
 
 RUN apk update && apk upgrade --no-cache
 
+ARG GIT_SHA=unknown
+RUN echo "Building server commit: ${GIT_SHA}"
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY package*.json ./
 COPY src ./src

@@ -2,13 +2,23 @@ name: Build and Push Docker Images
 
 on:
   workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
 
 jobs:
   docker:
-    runs-on: ubuntu-latest      
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      SERVER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/ai-resume-server
+      CLIENT_IMAGE: ${{ secrets.DOCKER_USERNAME }}/ai-resume-client
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.image_tag }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v4
@@ -16,59 +26,54 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Server
+      - name: Build Server Image
         uses: docker/build-push-action@v7
         with:
           context: ./server
+          push: false
           load: true
+          no-cache: true
           tags: |
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-server:latest
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-server:${{ github.sha }}
+            ${{ env.SERVER_IMAGE }}:latest
+            ${{ env.SERVER_IMAGE }}:${{ env.IMAGE_TAG }}
+          build-args: |
+            GIT_SHA=${{ env.IMAGE_TAG }}
 
       - name: Scan Server Image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/ai-resume-server:${{ github.sha }}
+          image-ref: ${{ env.SERVER_IMAGE }}:${{ env.IMAGE_TAG }}
           severity: CRITICAL
-          exit-code: 1    
+          exit-code: 1
 
-      - name: Build and Push Server
-        uses: docker/build-push-action@v7
-        with:
-          context: ./server
-          push: true
-          tags: |
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-server:latest
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-server:${{ github.sha }}     
+      - name: Push Server Image
+        run: |
+          docker push "${SERVER_IMAGE}:${IMAGE_TAG}"
+          docker push "${SERVER_IMAGE}:latest"
 
-      - name: Build and Push Client
+      - name: Build Client Image
         uses: docker/build-push-action@v7
         with:
           context: ./client
+          push: false
           load: true
+          no-cache: true
           tags: |
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-client:latest
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-client:${{ github.sha }}
+            ${{ env.CLIENT_IMAGE }}:latest
+            ${{ env.CLIENT_IMAGE }}:${{ env.IMAGE_TAG }}
           build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }} 
-            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}   
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+            GIT_SHA=${{ env.IMAGE_TAG }}
 
       - name: Scan Client Image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/ai-resume-client:${{ github.sha }}
+          image-ref: ${{ env.CLIENT_IMAGE }}:${{ env.IMAGE_TAG }}
           severity: CRITICAL
-          exit-code: 1        
+          exit-code: 1
 
-      - name: Build and Push Client
-        uses: docker/build-push-action@v7
-        with:
-          context: ./client
-          push: true
-          tags: |
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-client:latest
-           ${{ secrets.DOCKER_USERNAME }}/ai-resume-client:${{ github.sha }}
-          build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }} 
-            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}     
-    
+      - name: Push Client Image
+        run: |
+          docker push "${CLIENT_IMAGE}:${IMAGE_TAG}"
+          docker push "${CLIENT_IMAGE}:latest"

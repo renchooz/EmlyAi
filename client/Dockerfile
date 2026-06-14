@@ -9,11 +9,12 @@ COPY . .
 
 ARG VITE_API_URL
 ARG VITE_GOOGLE_CLIENT_ID
+ARG GIT_SHA=unknown
 
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
-RUN npm run build
+RUN echo "Building client commit: ${GIT_SHA}" && npm run build
 
 FROM nginx:alpine
 

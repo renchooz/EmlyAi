@@ -2,6 +2,10 @@ name: Deploy to EC2
 
 on:
   workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
 
 jobs:
   deploy:
@@ -16,6 +20,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
+
+            IMAGE_TAG="${{ inputs.image_tag }}"
+            echo "Deploying commit: ${IMAGE_TAG}"
 
             echo "Updating packages..."
             sudo apt update -y
@@ -72,7 +79,7 @@ jobs:
             cat > docker-compose.yml <<'EOF'
             services:
               server:
-                image: ${DOCKER_USERNAME}/ai-resume-server:${{ github.sha }}
+                image: ${DOCKER_USERNAME}/ai-resume-server:${{ inputs.image_tag }}
                 container_name: ai-resume-server
                 env_file:
                   - .env
@@ -83,7 +90,7 @@ jobs:
                 restart: unless-stopped
 
               client:
-                image: ${DOCKER_USERNAME}/ai-resume-client:${{ github.sha }}
+                image: ${DOCKER_USERNAME}/ai-resume-client:${{ inputs.image_tag }}
                 container_name: ai-resume-client
                 ports:
                   - "127.0.0.1:5173:80"
@@ -180,17 +187,35 @@ jobs:
 
             echo "Deploying new containers..."
             docker compose --env-file .env pull
-            docker compose --env-file .env up -d --force-recreate
+            docker compose --env-file .env up -d --pull always --force-recreate
 
             echo "Restarting Nginx..."
             sudo nginx -t
             sudo systemctl restart nginx
 
             echo "Waiting for server to start..."
-            sleep 15
+            HEALTH_OK=false
+            for attempt in $(seq 1 12); do
+              if curl -fsS http://127.0.0.1:5000/api/health; then
+                HEALTH_OK=true
+                break
+              fi
+              echo "Health check attempt ${attempt}/12 failed, retrying in 5s..."
+              sleep 5
+            done
+
+            RUNNING_SERVER_IMAGE=$(docker inspect --format='{{.Config.Image}}' ai-resume-server 2>/dev/null || true)
+            RUNNING_CLIENT_IMAGE=$(docker inspect --format='{{.Config.Image}}' ai-resume-client 2>/dev/null || true)
+            echo "Running server image: ${RUNNING_SERVER_IMAGE}"
+            echo "Running client image: ${RUNNING_CLIENT_IMAGE}"
+
+            if [[ "${RUNNING_SERVER_IMAGE}" != *"${IMAGE_TAG}"* ]] || [[ "${RUNNING_CLIENT_IMAGE}" != *"${IMAGE_TAG}"* ]]; then
+              echo "Deployed containers are not running the expected commit tag: ${IMAGE_TAG}"
+              exit 1
+            fi
 
             echo "Running health check..."
-            if curl -fsS http://127.0.0.1:5000/api/health; then
+            if [ "$HEALTH_OK" = true ]; then
               echo "Health check passed ✅"
               echo "Cleaning old Docker images..."
               docker image prune -f
