@@ -49,84 +49,90 @@ jobs:
             mkdir -p ~/ai-resume-app/uploads
             cd ~/ai-resume-app
 
+            SERVER_IMAGE="${{ secrets.DOCKER_USERNAME }}/ai-resume-server:${IMAGE_TAG}"
+            CLIENT_IMAGE="${{ secrets.DOCKER_USERNAME }}/ai-resume-client:${IMAGE_TAG}"
+
             echo "Creating .env file..."
-            cat > .env <<EOF
-            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-            PORT=${{ secrets.PORT }}
-            SERVER_URL=${{ secrets.SERVER_URL }}
-            GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
-            MONGO_URI=${{ secrets.MONGO_URI }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            CLIENT_URL=${{ secrets.CLIENT_URL }}
-            EOF
+            {
+              echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+              echo "PORT=${{ secrets.PORT }}"
+              echo "SERVER_URL=${{ secrets.SERVER_URL }}"
+              echo "GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}"
+              echo "MONGO_URI=${{ secrets.MONGO_URI }}"
+              echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+              echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+              echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
+              echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
+              echo "CLIENT_URL=${{ secrets.CLIENT_URL }}"
+            } > .env
 
             echo "Creating Prometheus.yml"
-            cat > prometheus.yml <<'EOF'
-            global:
-              scrape_interval: 15s
-
-            scrape_configs:
-              - job_name: "emlyai-server"
-                metrics_path: /metrics
-                static_configs:
-                  - targets: ["server:5000"]
-            EOF            
+            {
+              echo "global:"
+              echo "  scrape_interval: 15s"
+              echo ""
+              echo "scrape_configs:"
+              echo '  - job_name: "emlyai-server"'
+              echo "    metrics_path: /metrics"
+              echo "    static_configs:"
+              echo '      - targets: ["server:5000"]'
+            } > prometheus.yml
 
             echo "Creating docker-compose.yml..."
-            cat > docker-compose.yml <<'EOF'
-            services:
-              server:
-                image: ${DOCKER_USERNAME}/ai-resume-server:${{ inputs.image_tag }}
-                container_name: ai-resume-server
-                env_file:
-                  - .env
-                volumes:
-                  - ./uploads:/app/uploads
-                ports:
-                  - "127.0.0.1:5000:5000"
-                restart: unless-stopped
+            {
+              echo "services:"
+              echo "  server:"
+              echo "    image: ${SERVER_IMAGE}"
+              echo "    container_name: ai-resume-server"
+              echo "    env_file:"
+              echo "      - .env"
+              echo "    volumes:"
+              echo "      - ./uploads:/app/uploads"
+              echo "    ports:"
+              echo '      - "127.0.0.1:5000:5000"'
+              echo "    restart: unless-stopped"
+              echo ""
+              echo "  client:"
+              echo "    image: ${CLIENT_IMAGE}"
+              echo "    container_name: ai-resume-client"
+              echo "    ports:"
+              echo '      - "127.0.0.1:5173:80"'
+              echo "    depends_on:"
+              echo "      - server"
+              echo "    restart: unless-stopped"
+              echo ""
+              echo "  mongo:"
+              echo "    image: mongo:7"
+              echo "    container_name: ai-resume-mongo"
+              echo "    volumes:"
+              echo "      - mongo_data:/data/db"
+              echo "    restart: unless-stopped"
+              echo ""
+              echo "  prometheus:"
+              echo "    image: prom/prometheus:latest"
+              echo "    container_name: emlyai-prometheus"
+              echo "    volumes:"
+              echo "      - ./prometheus.yml:/etc/prometheus/prometheus.yml"
+              echo "    ports:"
+              echo '      - "127.0.0.1:9090:9090"'
+              echo "    restart: unless-stopped"
+              echo ""
+              echo "  grafana:"
+              echo "    image: grafana/grafana:latest"
+              echo "    container_name: emlyai-grafana"
+              echo "    ports:"
+              echo '      - "127.0.0.1:3000:3000"'
+              echo "    volumes:"
+              echo "      - grafana_data:/var/lib/grafana"
+              echo "    restart: unless-stopped"
+              echo ""
+              echo "volumes:"
+              echo "  mongo_data:"
+              echo "  grafana_data:"
+            } > docker-compose.yml
 
-              client:
-                image: ${DOCKER_USERNAME}/ai-resume-client:${{ inputs.image_tag }}
-                container_name: ai-resume-client
-                ports:
-                  - "127.0.0.1:5173:80"
-                depends_on:
-                  - server
-                restart: unless-stopped
-
-              mongo:
-                image: mongo:7
-                container_name: ai-resume-mongo
-                volumes:
-                  - mongo_data:/data/db
-                restart: unless-stopped
-
-              prometheus:
-                image: prom/prometheus:latest
-                container_name: emlyai-prometheus
-                volumes:
-                  - ./prometheus.yml:/etc/prometheus/prometheus.yml
-                ports:
-                  - "127.0.0.1:9090:9090"
-                restart: unless-stopped
-
-              grafana:
-                image: grafana/grafana:latest
-                container_name: emlyai-grafana
-                ports:
-                  - "127.0.0.1:3000:3000"
-                volumes:
-                  - grafana_data:/var/lib/grafana
-                restart: unless-stopped                
-
-            volumes:
-              mongo_data:
-              grafana_data:
-            EOF
+            echo "docker-compose.yml image lines:"
+            grep "image:" docker-compose.yml
 
             echo "Setting up Nginx reverse proxy..."
             sudo tee /etc/nginx/sites-available/ai-resume > /dev/null <<'EOF'
@@ -186,8 +192,10 @@ jobs:
             OLD_CLIENT_IMAGE=$(docker inspect --format='{{.Config.Image}}' ai-resume-client 2>/dev/null || true)
 
             echo "Deploying new containers..."
+            docker pull "${SERVER_IMAGE}"
+            docker pull "${CLIENT_IMAGE}"
             docker compose --env-file .env pull
-            docker compose --env-file .env up -d --pull always --force-recreate
+            docker compose --env-file .env up -d --pull always --force-recreate --remove-orphans
 
             echo "Restarting Nginx..."
             sudo nginx -t
