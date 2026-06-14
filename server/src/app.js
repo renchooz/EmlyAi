@@ -33,6 +33,13 @@ app.use("/api/gmail", gmailRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/apply", applyRoutes);
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+    uptime: process.uptime(),
+  });
+});
 
 app.get("/", (req, res) => {
   res.send("AI Resume Sender Backend Running");

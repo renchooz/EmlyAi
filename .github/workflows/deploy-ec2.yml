@@ -61,7 +61,7 @@ jobs:
             cat > docker-compose.yml <<'EOF'
             services:
               server:
-                image: ${DOCKER_USERNAME}/ai-resume-server:latest
+                image: ${DOCKER_USERNAME}/ai-resume-server:${{ github.sha }}
                 container_name: ai-resume-server
                 env_file:
                   - .env
@@ -72,7 +72,7 @@ jobs:
                 restart: unless-stopped
 
               client:
-                image: ${DOCKER_USERNAME}/ai-resume-client:latest
+                image: ${DOCKER_USERNAME}/ai-resume-client:${{ github.sha }}
                 container_name: ai-resume-client
                 ports:
                   - "127.0.0.1:5173:80"
@@ -133,7 +133,14 @@ jobs:
             sudo ln -sf /etc/nginx/sites-available/ai-resume /etc/nginx/sites-enabled/ai-resume
             sudo rm -f /etc/nginx/sites-enabled/default
 
-            echo "Deploying containers..."
+            
+
+            echo "Saving current running images for rollback..."
+
+            OLD_SERVER_IMAGE=$(docker inspect --format='{{.Config.Image}}' ai-resume-server 2>/dev/null || true)
+            OLD_CLIENT_IMAGE=$(docker inspect --format='{{.Config.Image}}' ai-resume-client 2>/dev/null || true)
+
+            echo "Deploying new containers..."
             docker compose --env-file .env pull
             docker compose --env-file .env up -d
 
@@ -141,8 +148,39 @@ jobs:
             sudo nginx -t
             sudo systemctl restart nginx
 
-            echo "Cleaning old Docker images..."
-            docker image prune -f
+            echo "Waiting for server to start..."
+            sleep 15
 
-            echo "Deployment completed!"
+            echo "Running health check..."
+            if curl -fsS http://127.0.0.1:5000/api/health; then
+              echo "Health check passed ✅"
+              echo "Cleaning old Docker images..."
+              docker image prune -f
+              echo "Deployment completed successfully!"
+            else
+              echo "Health check failed ❌ Rolling back..."
+
+              if [ -n "$OLD_SERVER_IMAGE" ]; then
+                sed -i "s|image: .*ai-resume-server:.*|image: $OLD_SERVER_IMAGE|" docker-compose.yml
+              fi
+
+              if [ -n "$OLD_CLIENT_IMAGE" ]; then
+                sed -i "s|image: .*ai-resume-client:.*|image: $OLD_CLIENT_IMAGE|" docker-compose.yml
+              fi
+
+              docker compose --env-file .env up -d
+
+              echo "Waiting after rollback..."
+              sleep 10
+
+              if curl -fsS http://127.0.0.1:5000/api/health; then
+                echo "Rollback successful 🔁"
+              else
+                echo "Rollback also failed. Check logs:"
+                docker logs ai-resume-server --tail=100
+                exit 1
+              fi
+
+              exit 1
+            fi
 
