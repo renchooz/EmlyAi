@@ -2,7 +2,7 @@ name: DevSecOps Pipeline
 on:
   push:
     branches:
-      - main
+      - prod
 
 jobs:
   security:
