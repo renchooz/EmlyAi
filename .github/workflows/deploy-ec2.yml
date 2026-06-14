@@ -122,9 +122,9 @@ jobs:
               echo "    container_name: emlyai-grafana"
               echo "    ports:"
               echo '      - "127.0.0.1:3000:3000"'
-              echo "  environment:"
-              echo "    - GF_SERVER_ROOT_URL=https://98.83.136.165.nip.io/grafana/"
-              echo "    - GF_SERVER_SERVE_FROM_SUB_PATH=true"
+              echo "    environment:"
+              echo "      - GF_SERVER_ROOT_URL=https://98.83.136.165.nip.io/grafana/"
+              echo "      - GF_SERVER_SERVE_FROM_SUB_PATH=true"
               echo "    volumes:"
               echo "      - grafana_data:/var/lib/grafana"
               echo "    restart: unless-stopped"
