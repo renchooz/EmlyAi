@@ -180,7 +180,7 @@ jobs:
 
             echo "Deploying new containers..."
             docker compose --env-file .env pull
-            docker compose --env-file .env up -d
+            docker compose --env-file .env up -d --force-recreate
 
             echo "Restarting Nginx..."
             sudo nginx -t
@@ -206,7 +206,7 @@ jobs:
                 sed -i "s|image: .*ai-resume-client:.*|image: $OLD_CLIENT_IMAGE|" docker-compose.yml
               fi
 
-              docker compose --env-file .env up -d
+              docker compose --env-file .env up -d --force-recreate
 
               echo "Waiting after rollback..."
               sleep 10
