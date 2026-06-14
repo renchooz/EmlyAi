@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
-import resumeRoutes from "./routes/resume.routes.js";
+
 import aiRoutes from "./routes/ai.routes.js";
 import gmailRoutes from "./routes/gmail.routes.js";
 import emailRoutes from "./routes/email.routes.js";
