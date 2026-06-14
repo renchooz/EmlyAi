@@ -9,6 +9,7 @@ import emailRoutes from "./routes/email.routes.js";
 import applyRoutes from "./routes/apply.routes.js";
 import { configDotenv } from "dotenv";
 import path from "path"
+import { httpRequestDuration, metricsRegistry } from "./metrics.js";
 
 const app = express();
 
@@ -32,6 +33,24 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/gmail", gmailRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/apply", applyRoutes);
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+
+  res.on("finish", () => {
+    end({
+      method: req.method,
+      route: req.route?.path || req.path,
+      status_code: res.statusCode,
+    });
+  });
+
+  next();
+});
+
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", metricsRegistry.contentType);
+  res.end(await metricsRegistry.metrics());
+});
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({

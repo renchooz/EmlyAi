@@ -56,6 +56,17 @@ jobs:
             CLIENT_URL=${{ secrets.CLIENT_URL }}
             EOF
 
+            echo "Creating Prometheus.yml"
+            cat > prometheus.yml <<'EOF'
+            global:
+              scrape_interval: 15s
+
+            scrape_configs:
+              - job_name: "emlyai-server"
+                metrics_path: /metrics
+                static_configs:
+                  - targets: ["server:5000"]
+            EOF            
 
             echo "Creating docker-compose.yml..."
             cat > docker-compose.yml <<'EOF'
@@ -87,8 +98,27 @@ jobs:
                   - mongo_data:/data/db
                 restart: unless-stopped
 
+              prometheus:
+                image: prom/prometheus:latest
+                container_name: emlyai-prometheus
+                volumes:
+                  - ./prometheus.yml:/etc/prometheus/prometheus.yml
+                ports:
+                  - "127.0.0.1:9090:9090"
+                restart: unless-stopped
+
+              grafana:
+                image: grafana/grafana:latest
+                container_name: emlyai-grafana
+                ports:
+                  - "127.0.0.1:3000:3000"
+                volumes:
+                  - grafana_data:/var/lib/grafana
+                restart: unless-stopped                
+
             volumes:
               mongo_data:
+              grafana_data:
             EOF
 
             echo "Setting up Nginx reverse proxy..."
@@ -127,13 +157,21 @@ jobs:
                     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                     proxy_set_header X-Forwarded-Proto $scheme;
                 }
+
+                location /grafana/ {
+                    proxy_pass http://127.0.0.1:3000/;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }                
             }
             EOF
 
             sudo ln -sf /etc/nginx/sites-available/ai-resume /etc/nginx/sites-enabled/ai-resume
             sudo rm -f /etc/nginx/sites-enabled/default
 
-            
+
 
             echo "Saving current running images for rollback..."
 
