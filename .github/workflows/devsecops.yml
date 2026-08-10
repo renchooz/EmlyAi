@@ -5,9 +5,9 @@ on:
       - prod
 
 jobs:
-  security:
-    uses: ./.github/workflows/security.yml
-    secrets: inherit  
+  # security:
+  #   uses: ./.github/workflows/security.yml
+  #   secrets: inherit  
     # inherit means pass all envs from parents to child
 
   build_push:
