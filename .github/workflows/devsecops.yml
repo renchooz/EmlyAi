@@ -18,4 +18,6 @@ jobs:
   deploy:
     needs: build_push
     uses: ./.github/workflows/deploy-ec2.yml
+    with:
+      image_tag: ${{ github.sha }}
     secrets: inherit      
