@@ -51,18 +51,14 @@ export const generateJobEmail = async (
   companyName,
 ) => {
   const prompt = `
-You are a professional recruiter assistant.
+You are an expert career coach who writes concise job application emails that busy HR managers and recruiters actually read and reply to.
 
-Generate:
+Generate a SHORT, high-impact job application email — not a cover letter, not an essay.
 
-1. Email Subject
-2. Professional Job Application Email
-
-Return ONLY valid JSON.
-
+Return ONLY valid JSON:
 {
-  "subject":"",
-  "emailBody":""
+  "subject": "",
+  "emailBody": ""
 }
 
 COMPANY:
@@ -73,15 +69,51 @@ ${resumeText}
 
 JOB DESCRIPTION:
 ${jobDescription}
-Do not include placeholder links like [LinkedIn Profile Link] or [GitHub Profile Link]. Only include links if they are present in the resume text. and Do not use markdown formatting like **bold**, bullet markdown, or headings. Return plain professional email text only. `;
 
-  const result = await getModel().generateContent(prompt);
+STRICT RULES FOR subject:
+- Under 60 characters
+- Mention the role title from the job description
+- Make it specific and attention-grabbing (avoid generic "Job Application")
+
+STRICT RULES FOR emailBody:
+- 90 to 140 words total — never exceed 150 words
+- Exactly 3 short paragraphs separated by a blank line
+- Paragraph 1 (1-2 sentences): Strong opening — show interest in this specific role at ${companyName}, mention the exact role title
+- Paragraph 2 (2-3 sentences): Highlight only the 2 most relevant achievements or skills from the resume that match the job description — use numbers or outcomes when available
+- Paragraph 3 (1-2 sentences): Clear call to action (availability for interview) + professional sign-off with the candidate's full name from the resume
+
+TONE & STYLE:
+- Confident, warm, and human — write like a strong candidate, not a template
+- Easy to scan in under 20 seconds
+- Do NOT repeat the entire resume or list every skill
+- Do NOT use clichés like "I hope this email finds you well", "Dear Hiring Manager" without a name, or "I am writing to apply"
+- Do NOT use markdown, bullet points, headings, or bold text
+- Do NOT include placeholder links like [LinkedIn Profile Link]. Only include real links if they appear in the resume
+- Return plain professional email text only
+`;
+
+  const result = await getModel().generateContent({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.75,
+      maxOutputTokens: 450,
+    },
+  });
 
   const text = result.response.text();
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
 
-  return JSON.parse(jsonMatch[0]);
+  const parsed = JSON.parse(jsonMatch[0]);
+
+  if (parsed.emailBody) {
+    parsed.emailBody = parsed.emailBody
+      .replace(/\*\*/g, "")
+      .replace(/^[-*•]\s+/gm, "")
+      .trim();
+  }
+
+  return parsed;
 };
 
 export const generateCoverLetter = async (
