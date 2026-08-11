@@ -266,6 +266,78 @@ docker compose down
 * Docker Containers
 * GitHub Actions CI/CD
 
+### New EC2 setup (13.61.25.64)
+
+When moving to a **new EC2 instance**, update these in order:
+
+#### 1. AWS EC2 security group
+
+Open inbound ports:
+
+| Port | Purpose |
+|------|---------|
+| 22   | SSH (GitHub Actions deploy) |
+| 80   | HTTP |
+| 443  | HTTPS (after SSL setup) |
+
+#### 2. GitHub repository secrets
+
+Update in **Settings → Secrets and variables → Actions**:
+
+| Secret | New value |
+|--------|-----------|
+| `EC2_HOST` | `13.61.25.64` |
+| `EC2_USER` | `ubuntu` (or your AMI user) |
+| `EC2_SSH_KEY` | Private key contents for the new instance |
+| `EC2_DOMAIN` | `13.61.25.64.nip.io` |
+| `CLIENT_URL` | `http://13.61.25.64.nip.io` |
+| `SERVER_URL` | `http://13.61.25.64.nip.io` |
+| `VITE_API_URL` | `http://13.61.25.64.nip.io/api` |
+| `GOOGLE_REDIRECT_URI` | `http://13.61.25.64.nip.io/api/gmail/callback` |
+| `MONGO_URI` | `mongodb://mongo:27017/emlyai` |
+
+Keep existing secrets unchanged: `DOCKER_USERNAME`, `DOCKER_PASSWORD`, `JWT_SECRET`, `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `PORT`.
+
+After enabling HTTPS with Certbot, change `http://` to `https://` in `CLIENT_URL`, `SERVER_URL`, `VITE_API_URL`, and `GOOGLE_REDIRECT_URI`, then redeploy.
+
+#### 3. Google Cloud Console (OAuth)
+
+In [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → your OAuth client:
+
+**Authorized JavaScript origins**
+```
+http://13.61.25.64.nip.io
+https://13.61.25.64.nip.io
+```
+
+**Authorized redirect URIs**
+```
+http://13.61.25.64.nip.io/api/gmail/callback
+https://13.61.25.64.nip.io/api/gmail/callback
+```
+
+#### 4. Deploy
+
+Push to the `prod` branch to trigger the pipeline:
+
+```bash
+git push origin prod
+```
+
+The workflow installs Docker, Nginx, pulls images from Docker Hub, and starts containers on the new server.
+
+#### 5. Enable HTTPS (one-time on EC2)
+
+SSH into the new server:
+
+```bash
+ssh -i your-key.pem ubuntu@13.61.25.64
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d 13.61.25.64.nip.io
+```
+
+Then update GitHub secrets to use `https://` URLs and push again.
+
 ### CI/CD Flow
 
 ```text
