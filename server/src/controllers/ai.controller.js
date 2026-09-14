@@ -5,12 +5,13 @@ import {
   analyzeResumeWithJD,
   generateCoverLetter,
   generateJobEmail,
-  selectBestResume
+  selectBestResume,
+  chatWithAssistant
 } from "../services/ai.service.js";
 
 export const analyzeResume = async (req, res) => {
   try {
-    const { resumeId, jobDescription } = req.body;
+    const { resumeId, jobDescription, companyName, jobTitle } = req.body;
 
     const resume = await Resume.findById(resumeId);
 
@@ -30,6 +31,8 @@ export const analyzeResume = async (req, res) => {
       user: req.user._id,
       resume: resume._id,
       jobDescription,
+      companyName,
+      jobTitle,
       ...aiResult
     });
 
@@ -40,6 +43,25 @@ export const analyzeResume = async (req, res) => {
   } catch (error) {
     console.log(error);
 
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+export const getAnalysisHistory = async (req, res) => {
+  try {
+    const analyses = await Analysis.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.status(200).json({
+      success: true,
+      count: analyses.length,
+      analyses
+    });
+  } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message
@@ -125,6 +147,34 @@ export const generateCoverLetterController = async (req, res) => {
   }
 };
 
+
+export const chatWithAI = async (req, res) => {
+  try {
+    const { message, history } = req.body;
+
+    if (!message?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is required"
+      });
+    }
+
+    const reply = await chatWithAssistant(
+      Array.isArray(history) ? history : [],
+      message.trim()
+    );
+
+    res.status(200).json({
+      success: true,
+      reply
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 export const selectBestResumeController = async (req, res) => {
   try {

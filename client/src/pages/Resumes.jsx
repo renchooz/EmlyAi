@@ -1,36 +1,151 @@
 import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { Upload, FileText, Eye, Pencil, Trash2, Loader2 } from "lucide-react";
 
 import { useResume } from "../context/ResumeContext";
 
+import PageHeader from "../components/PageHeader";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { EmptyState } from "../components/ui/empty-state";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../components/ui/dialog";
+import { fadeUp, staggerContainer } from "../lib/motion";
+
+const Dropzone = ({ onFile, uploading }) => {
+  const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) onFile(file);
+  };
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      onClick={() => fileInputRef.current?.click()}
+      className={`cursor-pointer rounded-[22px] border border-dashed p-8 text-center transition-colors sm:p-[52px] ${
+        isDragging ? "border-brand-500 bg-surface-sunken" : "border-border-strong bg-elevated hover:bg-surface-sunken"
+      }`}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFile(file);
+          e.target.value = "";
+        }}
+        className="hidden"
+      />
+
+      <motion.div
+        animate={isDragging ? { y: -4, scale: 1.05 } : { y: [0, -6, 0] }}
+        transition={isDragging ? { duration: 0.2 } : { duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+        className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-sunken text-fg-muted"
+      >
+        {uploading ? <Loader2 size={26} className="animate-spin" /> : <Upload size={26} />}
+      </motion.div>
+
+      <p
+        className="mt-4 font-medium text-fg"
+        style={{ fontFamily: "var(--font-display)", fontSize: 24, letterSpacing: "-0.022em" }}
+      >
+        {uploading ? "Uploading resume…" : "Drag & drop your resume"}
+      </p>
+      <p className="mt-1.5 text-sm text-fg-muted">or click to browse — PDF only, up to 5 MB</p>
+    </div>
+  );
+};
+
+const ResumeCard = ({
+  resume,
+  isRenaming,
+  newName,
+  onNewNameChange,
+  onStartRename,
+  onSaveRename,
+  onCancelRename,
+  onPreview,
+  onDeleteRequest,
+}) => (
+  <motion.div variants={fadeUp}>
+    <Card className="transition-transform hover:-translate-y-1">
+      <CardContent className="p-[22px]">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[10px] bg-surface-sunken text-fg-muted">
+            <FileText size={16} />
+          </div>
+
+          <Badge variant="outline">PDF</Badge>
+        </div>
+
+        {isRenaming ? (
+          <div className="space-y-3">
+            <Input value={newName} onChange={(e) => onNewNameChange(e.target.value)} autoFocus />
+
+            <div className="flex gap-2">
+              <Button size="sm" onClick={onSaveRename}>
+                Save
+              </Button>
+              <Button size="sm" variant="outline" onClick={onCancelRename}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h2 className="line-clamp-2 text-base font-medium text-fg">{resume.originalName}</h2>
+
+            <p className="mt-2 text-sm text-fg-muted">{(resume.fileSize / 1024).toFixed(1)} KB</p>
+            <p className="mt-1 text-xs text-fg-subtle" style={{ fontFamily: "var(--font-mono)" }}>
+              Uploaded {new Date(resume.createdAt).toLocaleDateString()}
+            </p>
+
+            <div className="mt-5 flex gap-2">
+              <Button size="sm" variant="secondary" className="flex-1" onClick={onPreview}>
+                <Eye size={15} />
+                Preview
+              </Button>
+              <Button size="sm" variant="secondary" className="flex-1" onClick={onStartRename}>
+                <Pencil size={15} />
+                Rename
+              </Button>
+              <Button size="sm" variant="destructive" onClick={onDeleteRequest}>
+                <Trash2 size={15} />
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  </motion.div>
+);
 
 const Resumes = () => {
-  const fileInputRef = useRef(null);
   const [renamingId, setRenamingId] = useState(null);
   const [newName, setNewName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const {
-    resumes,
-    resumeLoading,
-    uploadResume,
-    previewResume,
-    renameResume,
-    deleteResume,
-  } = useResume();
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    await uploadResume(file);
-
-    e.target.value = "";
-  };
+  const { resumes, resumeLoading, uploadResume, previewResume, renameResume, deleteResume } =
+    useResume();
 
   const startRename = (resume) => {
     setRenamingId(resume._id);
@@ -46,213 +161,81 @@ const Resumes = () => {
     }
   };
 
+  const handleConfirmDelete = async () => {
+    setDeleting(true);
+    const deleted = await deleteResume(deleteTarget._id);
+    setDeleting(false);
+
+    if (deleted) setDeleteTarget(null);
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <Badge className="mb-3">
-            <FileText size={14} />
-            My Resumes
-          </Badge>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="My Resumes"
+        title="Manage your resumes"
+        sub="Upload every version you own, preview and rename them, and let EmlyAI choose the best one for each posting."
+      />
 
-          <h1 className="text-3xl font-bold text-white md:text-4xl">
-            Manage your resumes
-          </h1>
+      <Dropzone onFile={uploadResume} uploading={resumeLoading} />
 
-          <p className="mt-2 max-w-2xl text-slate-400">
-            Upload multiple resumes, preview them, rename based on role, and let
-            AI choose the best one for every job description.
-          </p>
-        </div>
-
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={resumeLoading}
-          >
-            {resumeLoading ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <Upload size={18} />
-            )}
-            Upload Resume
-          </Button>
-        </div>
-      </div>
-
-      {resumeLoading && resumes.length === 0 ? (
-        <Card>
-          <CardContent className="flex items-center justify-center p-10 text-slate-400">
-            <Loader2 className="mr-2 animate-spin" />
-            Loading resumes...
-          </CardContent>
-        </Card>
-      ) : resumes.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-300">
-              <FileText size={30} />
-            </div>
-
-            <h2 className="text-xl font-semibold text-white">
-              No resumes uploaded yet
-            </h2>
-
-            <p className="mt-2 max-w-md text-sm text-slate-400">
-              Upload your first PDF resume to start AI analysis, best resume
-              selection, and one-click applications.
-            </p>
-
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-6"
-            >
-              <Upload size={18} />
-              Upload Resume
-            </Button>
-          </CardContent>
-        </Card>
+      {resumes.length === 0 && !resumeLoading ? (
+        <EmptyState
+          icon={FileText}
+          title="No resumes uploaded yet"
+          description="Upload your first PDF resume to start AI analysis, best resume selection, and one-click applications."
+        />
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer(0.06)}
+          className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
+        >
           {resumes.map((resume) => (
-            <Card key={resume._id} className="overflow-hidden">
-              <CardContent className="p-5">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
-                    <FileText size={24} />
-                  </div>
-
-                  <Badge variant="outline">PDF</Badge>
-                </div>
-
-                {renamingId === resume._id ? (
-                  <div className="space-y-3">
-                    <input
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-violet-500"
-                    />
-
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleRename(resume._id)}
-                      >
-                        Save
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setRenamingId(null);
-                          setNewName("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <h2 className="line-clamp-2 text-lg font-semibold text-white">
-                      {resume.originalName}
-                    </h2>
-
-                    <p className="mt-2 text-sm text-slate-400">
-                      {(resume.fileSize / 1024).toFixed(1)} KB
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-500">
-                      Uploaded {new Date(resume.createdAt).toLocaleDateString()}
-                    </p>
-
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => previewResume(resume._id)}
-                      >
-                        <Eye size={15} />
-                        Preview
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => startRename(resume)}
-                      >
-                        <Pencil size={15} />
-                        Rename
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setDeleteTarget(resume)}
-                      >
-                        <Trash2 size={15} />
-                        Delete
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            <ResumeCard
+              key={resume._id}
+              resume={resume}
+              isRenaming={renamingId === resume._id}
+              newName={newName}
+              onNewNameChange={setNewName}
+              onStartRename={() => startRename(resume)}
+              onSaveRename={() => handleRename(resume._id)}
+              onCancelRename={() => {
+                setRenamingId(null);
+                setNewName("");
+              }}
+              onPreview={() => previewResume(resume._id)}
+              onDeleteRequest={() => setDeleteTarget(resume)}
+            />
           ))}
-        </div>
+        </motion.div>
       )}
-      {deleteTarget && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-    <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-950 p-6 text-white shadow-2xl">
-      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
-        <Trash2 size={24} />
-      </div>
 
-      <h2 className="text-xl font-semibold">
-        Delete resume?
-      </h2>
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-danger/10 text-danger">
+            <Trash2 size={24} />
+          </div>
 
-      <p className="mt-2 text-sm leading-6 text-slate-400">
-        Are you sure you want to delete{" "}
-        <span className="font-medium text-white">
-          {deleteTarget.originalName}
-        </span>
-        ? This action cannot be undone.
-      </p>
+          <DialogTitle>Delete resume?</DialogTitle>
 
-      <div className="mt-6 flex justify-end gap-3">
-        <Button
-          variant="outline"
-          onClick={() => setDeleteTarget(null)}
-        >
-          Cancel
-        </Button>
+          <DialogDescription>
+            Are you sure you want to delete{" "}
+            <span className="font-medium text-fg">{deleteTarget?.originalName}</span>? This action
+            cannot be undone.
+          </DialogDescription>
 
-        <Button
-          variant="destructive"
-          onClick={async () => {
-            const deleted = await deleteResume(deleteTarget._id);
-
-            if (deleted) {
-              setDeleteTarget(null);
-            }
-          }}
-        >
-          Delete Resume
-        </Button>
-      </div>
-    </div>
-  </div>
-)}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" loading={deleting} onClick={handleConfirmDelete}>
+              Delete Resume
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

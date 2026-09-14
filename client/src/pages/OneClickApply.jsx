@@ -1,13 +1,11 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import {
   Send,
-  Loader2,
   Building2,
   Mail,
   FileText,
   CheckCircle2,
-  Sparkles,
-  Eye,
   Wand2,
 } from "lucide-react";
 
@@ -15,22 +13,18 @@ import { useAI } from "../context/AIContext";
 import { useGmail } from "../context/GmailContext";
 import { useResume } from "../context/ResumeContext";
 import { sendEmailApi } from "../api/emailApi";
-import toast from "react-hot-toast";
 
+import PageHeader from "../components/PageHeader";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
 
 const OneClickApply = () => {
-  const {
-    previewApplication,
-    applicationPreview,
-    setApplicationPreview,
-    aiLoading,
-  } = useAI();
-
+  const { previewApplication, applicationPreview, setApplicationPreview, aiLoading } = useAI();
   const { resumes } = useResume();
-  const { gmailConnected, gmailEmail, connectGmail, gmailLoading } = useGmail();
+  const { gmailConnected, connectGmail, gmailLoading, fetchGmailStatus } = useGmail();
 
   const [sending, setSending] = useState(false);
   const [sentResult, setSentResult] = useState(null);
@@ -48,15 +42,11 @@ const OneClickApply = () => {
   });
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleGeneratePreview = async (e) => {
     e.preventDefault();
-
     setSentResult(null);
 
     const preview = await previewApplication(formData);
@@ -71,10 +61,7 @@ const OneClickApply = () => {
   };
 
   const handleEditableChange = (e) => {
-    setEditableData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setEditableData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleFinalSend = async () => {
@@ -97,230 +84,166 @@ const OneClickApply = () => {
       toast.success("Application sent successfully");
     } catch (error) {
       toast.error(error.message || "Failed to send application");
+
+      // The server clears the stored Gmail connection when it detects an
+      // expired/revoked token (an "invalid_grant" from Google) — re-check
+      // status so the sidebar/settings/this page's own banner immediately
+      // reflect "not connected" and prompt reconnecting, rather than the
+      // user hitting the same opaque error again on retry.
+      if (/reconnect gmail|no longer connected|not connected/i.test(error.message || "")) {
+        fetchGmailStatus();
+      }
     } finally {
       setSending(false);
     }
   };
 
   const selectedResumeName =
-    resumes.find((resume) => resume._id === editableData.resumeId)
-      ?.originalName || applicationPreview?.selectedResume?.name;
+    resumes.find((resume) => resume._id === editableData.resumeId)?.originalName ||
+    applicationPreview?.selectedResume?.name;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <Badge className="mb-3">
-            <Send size={14} />
-            One Click Apply
-          </Badge>
-
-          <h1 className="text-3xl font-bold text-white md:text-4xl">
-            Preview before sending
-          </h1>
-
-          <p className="mt-2 max-w-2xl text-slate-400">
-            Generate a smart application preview, edit the email, change resume
-            if needed, then send it from your Gmail.
-          </p>
-        </div>
-
-        <Badge variant={gmailConnected ? "default" : "destructive"}>
-          {gmailConnected ? `Gmail: ${gmailEmail}` : "Gmail not connected"}
-        </Badge>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="One Click Apply"
+        title="Preview before sending"
+        sub="Generate the application, edit the email, swap the resume if needed, then send it from your Gmail."
+      />
 
       {!gmailConnected && (
-        <Card className="border-yellow-500/30 bg-yellow-500/[0.06]">
-          <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="font-semibold text-yellow-200">
-                Connect Gmail to send applications
-              </h2>
-
-              <p className="mt-1 text-sm text-yellow-100/70">
-                Your emails will be sent from your own Gmail account using
-                Google OAuth.
-              </p>
-            </div>
-
-            <Button
-              onClick={connectGmail}
-              disabled={gmailLoading}
-              variant="outline"
-            >
-              {gmailLoading && <Loader2 size={18} className="animate-spin" />}
-              Connect Gmail
-            </Button>
-          </CardContent>
-        </Card>
+        <div
+          className="flex flex-wrap items-center gap-4 rounded-2xl border p-[18px] sm:px-[22px]"
+          style={{
+            background: "color-mix(in srgb, var(--color-warning) 12%, white)",
+            borderColor: "color-mix(in srgb, var(--color-warning) 25%, transparent)",
+          }}
+        >
+          <div>
+            <p className="font-medium text-warning">Connect Gmail to send applications</p>
+            <p className="mt-1 text-sm text-fg-muted">Emails go out from your own account using Google OAuth.</p>
+          </div>
+          <div className="flex-1" />
+          <Button size="sm" onClick={connectGmail} loading={gmailLoading}>
+            Connect Gmail
+          </Button>
+        </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3.5 lg:grid-cols-2">
         <Card>
-          <CardContent className="p-5">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
-                <Sparkles size={22} />
-              </div>
+          <CardContent className="p-[26px]">
+            <h2
+              className="font-medium text-fg"
+              style={{ fontFamily: "var(--font-display)", fontSize: "var(--heading-md)", letterSpacing: "-0.014em" }}
+            >
+              Application details
+            </h2>
+            <p className="mt-1 text-sm text-fg-muted">EmlyAI picks the resume and drafts the email.</p>
 
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Application Details
-                </h2>
-                <p className="text-sm text-slate-400">
-                  AI will select resume and generate editable email preview.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleGeneratePreview} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
-                  Company Name
-                </label>
-
-                <div className="relative">
-                  <Building2
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-
-                  <input
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    placeholder="Google"
-                    className="h-11 w-full rounded-xl border border-white/10 bg-slate-900 pl-10 pr-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
-                  HR Email
-                </label>
-
-                <div className="relative">
-                  <Mail
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-
-                  <input
-                    type="email"
-                    name="to"
-                    value={formData.to}
-                    onChange={handleChange}
-                    placeholder="hr@company.com"
-                    className="h-11 w-full rounded-xl border border-white/10 bg-slate-900 pl-10 pr-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
-                  Job Description
-                </label>
-
-                <textarea
-                  name="jobDescription"
-                  value={formData.jobDescription}
+            <form onSubmit={handleGeneratePreview} className="mt-5 space-y-3">
+              <div className="relative">
+                <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+                <Input
+                  name="companyName"
+                  value={formData.companyName}
                   onChange={handleChange}
-                  rows={12}
-                  placeholder="Paste job description here..."
-                  className="custom-scroll w-full resize-none rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500"
+                  placeholder="Company name"
+                  className="pl-9"
                 />
               </div>
 
-              <Button
-                type="submit"
-                disabled={aiLoading || !gmailConnected}
-                className="w-full"
-              >
-                {aiLoading ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Wand2 size={18} />
-                )}
-                {aiLoading ? "Generating Preview..." : "Generate Preview"}
+              <div className="relative">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+                <Input
+                  type="email"
+                  name="to"
+                  value={formData.to}
+                  onChange={handleChange}
+                  placeholder="hr@company.com"
+                  className="pl-9"
+                />
+              </div>
+
+              <Textarea
+                name="jobDescription"
+                value={formData.jobDescription}
+                onChange={handleChange}
+                rows={9}
+                placeholder="Paste job description here..."
+              />
+
+              <Button type="submit" loading={aiLoading} disabled={!gmailConnected} className="w-full">
+                {!aiLoading && <Wand2 size={18} />}
+                Generate preview
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="lg:sticky lg:top-24">
-          <CardContent className="p-5">
-            {!applicationPreview ? (
-              <div className="flex min-h-[560px] flex-col items-center justify-center text-center">
-                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-300">
-                  <Eye size={32} />
-                </div>
-
-                <h2 className="text-xl font-semibold text-white">
-                  Waiting for preview
-                </h2>
-
-                <p className="mt-2 max-w-md text-sm text-slate-400">
-                  AI-selected resume and editable email preview will appear
-                  here before sending.
-                </p>
+        <Card className="lg:sticky lg:top-24 overflow-hidden">
+          {!applicationPreview ? (
+            <CardContent className="flex min-h-[480px] flex-col items-center justify-center p-[26px] text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-sunken text-fg-muted">
+                <Send size={32} />
               </div>
-            ) : (
-              <div className="space-y-5">
+
+              <h2 className="text-xl font-semibold text-fg">Waiting for preview</h2>
+
+              <p className="mt-2 max-w-md text-sm text-fg-muted">
+                AI-selected resume and editable email preview will appear here before sending.
+              </p>
+            </CardContent>
+          ) : (
+            <>
+              <div className="flex items-center gap-2.5 border-b border-border bg-surface-sunken px-[18px] py-3.5">
+                <span className="text-xs text-fg-subtle" style={{ fontFamily: "var(--font-mono)" }}>
+                  preview
+                </span>
+                <div className="flex-1" />
+                <Badge variant="success">
+                  {sentResult ? <CheckCircle2 size={12} /> : null}
+                  {sentResult ? "sent" : "ready"}
+                </Badge>
+              </div>
+
+              <CardContent className="space-y-5 p-[26px]">
                 {sentResult && (
-                  <div className="rounded-2xl border border-green-500/30 bg-green-500/[0.06] p-5">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-1 text-green-400" />
-                      <div>
-                        <h2 className="text-lg font-semibold text-green-200">
-                          Application sent successfully
-                        </h2>
-                        <p className="mt-1 text-sm text-green-100/70">
-                          Sent from {sentResult.from}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3 rounded-2xl border border-success/30 bg-success/10 p-4">
+                    <CheckCircle2 className="mt-0.5 text-success" size={20} />
+                    <div>
+                      <p className="font-semibold text-success">Application sent successfully</p>
+                      <p className="mt-1 text-sm text-fg-muted">Sent from {sentResult.from}</p>
                     </div>
                   </div>
                 )}
 
-                <div className="rounded-xl border border-violet-500/30 bg-violet-500/[0.06] p-4">
-                  <div className="mb-3 flex items-center gap-2">
-                    <FileText size={18} className="text-violet-300" />
-                    <h3 className="font-semibold text-white">
-                      AI Recommended Resume
-                    </h3>
+                <div className="rounded-xl border border-border bg-surface-sunken p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <FileText size={16} className="text-fg-muted" />
+                    <h3 className="text-sm font-semibold text-fg">AI recommended resume</h3>
                   </div>
 
-                  <p className="text-sm text-slate-300">
-                    {applicationPreview.selectedResume?.name}
-                  </p>
+                  <p className="text-sm text-fg">{applicationPreview.selectedResume?.name}</p>
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm text-slate-400">
-                      Match Score
-                    </span>
-
-                    <span className="text-lg font-bold text-green-400">
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm text-fg-muted">Match score</span>
+                    <span className="text-base font-semibold text-success">
                       {applicationPreview.selectedResume?.matchScore}%
                     </span>
                   </div>
 
-                  <p className="mt-3 text-sm leading-6 text-slate-400">
+                  <p className="mt-2 text-sm leading-relaxed text-fg-muted">
                     {applicationPreview.selectedResume?.reason}
                   </p>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
-                    Change Resume
-                  </label>
-
+                  <label className="mb-1.5 block text-xs font-medium text-fg-muted">Change resume</label>
                   <select
                     name="resumeId"
                     value={editableData.resumeId}
                     onChange={handleEditableChange}
-                    className="h-11 w-full rounded-xl border border-white/10 bg-slate-900 px-3 text-sm text-white outline-none focus:border-violet-500"
+                    className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-fg outline-none focus:border-brand-500"
                   >
                     {resumes.map((resume) => (
                       <option key={resume._id} value={resume._id}>
@@ -328,50 +251,43 @@ const OneClickApply = () => {
                       </option>
                     ))}
                   </select>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Currently selected: {selectedResumeName}
-                  </p>
+                  <p className="mt-1.5 text-xs text-fg-subtle">Currently selected: {selectedResumeName}</p>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
-                    Subject
-                  </label>
-
-                  <input
-                    name="subject"
-                    value={editableData.subject}
-                    onChange={handleEditableChange}
-                    className="h-11 w-full rounded-xl border border-white/10 bg-slate-900 px-3 text-sm text-white outline-none focus:border-violet-500"
-                  />
+                  <label className="mb-1.5 block text-xs font-medium text-fg-muted">Subject</label>
+                  <Input name="subject" value={editableData.subject} onChange={handleEditableChange} />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
-                    Email Body
-                  </label>
-
-                  <textarea
+                  <label className="mb-1.5 block text-xs font-medium text-fg-muted">Email body</label>
+                  <Textarea
                     name="emailBody"
                     value={editableData.emailBody}
                     onChange={handleEditableChange}
-                    rows={12}
-                    className="custom-scroll w-full resize-none rounded-xl border border-white/10 bg-slate-900 p-3 text-sm leading-6 text-white outline-none focus:border-violet-500"
+                    rows={10}
+                    className="custom-scroll leading-relaxed"
                   />
+                </div>
+
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-sunken px-3.5 py-2.5 text-xs text-fg-subtle">
+                  <span
+                    className="rounded-md border border-border bg-elevated px-2 py-1"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    resume attached
+                  </span>
+                  automatically
                 </div>
 
                 <Button
                   onClick={handleFinalSend}
-                  disabled={sending || !gmailConnected}
+                  loading={sending}
+                  disabled={!gmailConnected}
                   className="w-full"
                 >
-                  {sending ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <Send size={18} />
-                  )}
-                  {sending ? "Sending..." : "Send Final Application"}
+                  <Send size={18} />
+                  Send from Gmail
                 </Button>
 
                 <Button
@@ -380,18 +296,14 @@ const OneClickApply = () => {
                   onClick={() => {
                     setApplicationPreview(null);
                     setSentResult(null);
-                    setEditableData({
-                      subject: "",
-                      emailBody: "",
-                      resumeId: "",
-                    });
+                    setEditableData({ subject: "", emailBody: "", resumeId: "" });
                   }}
                 >
-                  Reset Preview
+                  Reset preview
                 </Button>
-              </div>
-            )}
-          </CardContent>
+              </CardContent>
+            </>
+          )}
         </Card>
       </div>
     </div>

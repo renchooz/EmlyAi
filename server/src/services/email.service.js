@@ -87,6 +87,18 @@ const makeBody = ({
     .replace(/=+$/, "");
 };
 
+// "invalid_grant" from Google's token endpoint means the stored refresh
+// token itself is no longer usable — access was revoked from the Google
+// Account, the account's password/security settings changed, or (very
+// commonly for a personal/dev project) the Google Cloud OAuth consent
+// screen is still in "Testing" publishing status, where refresh tokens
+// expire after 7 days regardless of use. Recovering from it always means
+// the user has to reconnect — there's no silent refresh that fixes it.
+const isInvalidGrantError = (error) => {
+  const code = error?.response?.data?.error;
+  return code === "invalid_grant" || /invalid_grant/i.test(error?.message || "");
+};
+
 export const sendGmailWithAttachment = async ({
   userId,
   to,
@@ -108,6 +120,20 @@ export const sendGmailWithAttachment = async ({
     expiry_date: gmailToken.expiryDate,
   });
 
+  // googleapis silently refreshes an expired access token in-memory using
+  // the refresh token; without this listener that refreshed token was never
+  // written back, so every send re-used the stale stored one. Persist it.
+  oauth2Client.on("tokens", (tokens) => {
+    const update = {};
+    if (tokens.access_token) update.accessToken = tokens.access_token;
+    if (tokens.expiry_date) update.expiryDate = tokens.expiry_date;
+    if (tokens.refresh_token) update.refreshToken = tokens.refresh_token;
+
+    if (Object.keys(update).length) {
+      GmailToken.updateOne({ user: userId }, update).catch(() => {});
+    }
+  });
+
   const gmail = google.gmail({
     version: "v1",
     auth: oauth2Client,
@@ -124,15 +150,30 @@ export const sendGmailWithAttachment = async ({
     attachmentName: resume.originalName,
   });
 
-  const response = await gmail.users.messages.send({
-    userId: "me",
-    requestBody: {
-      raw,
-    },
-  });
+  try {
+    const response = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw,
+      },
+    });
 
-  return {
-    messageId: response.data.id,
-    from: gmailToken.email,
-  };
+    return {
+      messageId: response.data.id,
+      from: gmailToken.email,
+    };
+  } catch (error) {
+    if (isInvalidGrantError(error)) {
+      // Clear the stale connection so the UI stops claiming Gmail is
+      // connected and the user is prompted to reconnect, instead of hitting
+      // this same opaque error on every future send.
+      await GmailToken.deleteOne({ user: userId }).catch(() => {});
+
+      throw new Error(
+        "Your Gmail connection has expired or was revoked. Please reconnect Gmail in Settings to keep sending applications."
+      );
+    }
+
+    throw error;
+  }
 };

@@ -1,128 +1,92 @@
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-  Mail,
-  Sparkles,
-  Target,
-} from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import { Card, CardContent } from "../ui/card";
+import { Reveal } from "./Reveal";
+import { ParallaxOrb } from "./ParallaxOrb";
+import { HeroResumeStage } from "./HeroResumeStage";
+import { ProductDemo, DEMO_STEPS } from "./ProductDemo";
+import { useDemoLoop } from "./useDemoLoop";
 
-const HeroSection = () => {
+export function HeroSection() {
+  const { step, t, reduced, replay } = useDemoLoop(DEMO_STEPS);
+
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 pb-20 pt-36 text-white">
-      <div className="absolute left-1/2 top-0 h-[520px] w-[760px] -translate-x-1/2 rounded-full bg-violet-600/20 blur-[120px]" />
-      <div className="absolute bottom-20 right-0 h-[360px] w-[360px] rounded-full bg-cyan-500/10 blur-[100px]" />
+    <section
+      id="demo"
+      className="relative overflow-hidden px-[18px] pt-[40px] pb-[56px] min-[700px]:px-8 min-[700px]:pt-16 min-[700px]:pb-20"
+    >
+      <ParallaxOrb
+        src="/landing/orb-violet.png"
+        k={0.12}
+        animation="el-orb 28s ease-in-out infinite"
+        className="hidden sm:block"
+        style={{ right: -200, top: -140, width: 560, opacity: 0.42, filter: "blur(8px)" }}
+      />
+      <ParallaxOrb
+        src="/landing/orb-meadow.png"
+        k={-0.08}
+        animation="el-orb 34s ease-in-out infinite reverse"
+        className="hidden sm:block"
+        style={{ left: -160, bottom: -220, width: 440, opacity: 0.3, filter: "blur(10px)" }}
+      />
 
-      <div className="relative z-10 mx-auto max-w-7xl text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Badge className="mb-8">
-            <Sparkles size={14} />
-            AI-powered job applications
-          </Badge>
-        </motion.div>
+      <div className="relative mx-auto max-w-[1300px]">
+        <div className="grid items-center gap-10 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+          <div className="max-w-[760px]">
+            <Reveal className="el-eyebrow-pill">
+              <span
+                className="inline-block h-3 w-3 rounded-full"
+                style={{
+                  border: "2px solid var(--el-grey-200)",
+                  borderTopColor: "var(--el-accent-violet)",
+                  animation: reduced ? undefined : "el-spin 1s linear infinite",
+                }}
+              />
+              Watch it work — no signup
+            </Reveal>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mx-auto max-w-5xl text-4xl font-bold leading-tight md:text-6xl lg:text-7xl"
-        >
-          Apply to jobs smarter,
-          <br />
-          <span className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-transparent">
-            not harder.
-          </span>
-        </motion.h1>
+            <Reveal
+              as="h1"
+              delay={90}
+              className="mt-6 font-light"
+              style={{
+                fontFamily: "var(--el-font-display)",
+                fontSize: "clamp(42px, 6.4vw, 82px)",
+                lineHeight: 0.98,
+                letterSpacing: "-0.036em",
+                textWrap: "balance",
+              }}
+            >
+              One job description.
+              <br />
+              <span className="font-medium">One perfect application.</span>
+            </Reveal>
 
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mx-auto mt-6 max-w-2xl text-base text-slate-400 md:text-xl"
-        >
-          Upload multiple resumes, paste a job description, let AI pick your
-          best resume, generate a tailored email, and send it from your Gmail
-          with one click.
-        </motion.p>
+            <Reveal
+              as="p"
+              delay={180}
+              className="mt-6 max-w-[520px] text-lg"
+              style={{ lineHeight: 1.55, color: "var(--el-text-secondary)" }}
+            >
+              EmlyAI ranks your resumes, writes the email, attaches the winner and sends it from your Gmail. The
+              demo below is the real flow, running on a loop.
+            </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
-        >
-          <Link to="/login">
-            <Button size="lg">
-              Start applying
-              <ArrowRight size={18} />
-            </Button>
-          </Link>
+            <Reveal delay={270} className="mt-8 flex flex-wrap items-center gap-3">
+              <Link to="/register" className="el-btn el-btn-lg el-btn-primary">
+                Start applying free
+              </Link>
+              <button type="button" onClick={replay} className="el-btn el-btn-lg el-btn-ghost">
+                ↻ Replay demo
+              </button>
+            </Reveal>
+          </div>
 
-          <a href="#features">
-            <Button size="lg" variant="outline">
-              Explore features
-            </Button>
-          </a>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-          className="mx-auto mt-16 grid max-w-4xl gap-4 md:grid-cols-3"
-        >
-          {[
-            {
-              icon: FileText,
-              title: "Best resume picker",
-              text: "AI selects the most relevant resume for each JD.",
-            },
-            {
-              icon: Target,
-              title: "ATS match score",
-              text: "Get strengths, missing skills and improvement tips.",
-            },
-            {
-              icon: Mail,
-              title: "Gmail sending",
-              text: "Send applications from your own connected Gmail.",
-            },
-          ].map((item) => (
-            <Card key={item.title}>
-              <CardContent className="p-5 text-left">
-                <item.icon className="mb-4 text-violet-300" />
-                <h3 className="font-semibold">{item.title}</h3>
-                <p className="mt-2 text-sm text-slate-400">{item.text}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </motion.div>
-
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-5 text-sm text-slate-500">
-          <span className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-green-400" />
-            No app password needed
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-green-400" />
-            Gmail OAuth based
-          </span>
-          <span className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-green-400" />
-            Resume attachment included
-          </span>
+          <HeroResumeStage />
         </div>
+
+        <Reveal>
+          <ProductDemo step={step} t={t} reduced={reduced} />
+        </Reveal>
       </div>
     </section>
   );
-};
-
-export default HeroSection;
+}

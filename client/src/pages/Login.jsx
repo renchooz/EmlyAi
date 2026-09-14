@@ -2,32 +2,27 @@ import { useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
-import { Mail, Lock, Sparkles, Loader2 } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { BrandMark } from "../components/Brand";
+
+const BENEFITS = ["EmlyAI picks your best resume", "Editable email preview before sending", "Gmail OAuth based sending"];
 
 const Login = () => {
   const { user, login, googleLogin } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   if (user) {
-  return <Navigate to="/dashboard" replace />;
-}
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -57,141 +52,130 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 text-white">
-      <div className="absolute left-1/2 top-0 h-[520px] w-[760px] -translate-x-1/2 rounded-full bg-violet-600/20 blur-[120px]" />
-      <div className="absolute bottom-0 right-0 h-[360px] w-[360px] rounded-full bg-cyan-500/10 blur-[100px]" />
+    <div className="relative grid min-h-screen items-center gap-[28px] overflow-hidden bg-canvas px-[20px] py-[40px] text-fg [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] min-[900px]:gap-12 min-[900px]:px-10 min-[900px]:py-14">
+      <img
+        src="/landing/orb-violet.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-[220px] -top-[180px] hidden w-[620px] opacity-50 blur-[8px] sm:block"
+      />
+      <img
+        src="/landing/orb-sunset.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-[260px] -right-[240px] hidden w-[620px] opacity-40 blur-[8px] sm:block"
+      />
 
-      <div className="relative z-10 grid w-full max-w-6xl items-center gap-10 lg:grid-cols-2">
-        <div className="hidden lg:block">
-          <Badge className="mb-5">
-            <Sparkles size={14} />
-            ApplyPilot AI
-          </Badge>
-
-          <h1 className="text-5xl font-bold leading-tight">
-            Send smarter job applications with AI.
-          </h1>
-
-          <p className="mt-5 max-w-xl text-slate-400">
-            Upload resumes, analyze JDs, generate tailored emails, and send
-            applications directly from your Gmail.
-          </p>
-
-          <div className="mt-8 grid max-w-lg gap-4">
-            {[
-              "AI selects your best resume",
-              "Editable email preview before sending",
-              "Gmail OAuth based sending",
-            ].map((item) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-300 backdrop-blur"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
+      <div className="relative mx-auto w-full max-w-[520px] justify-self-center min-[900px]:justify-self-end">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-elevated px-3.5 py-1.5 text-sm text-fg-muted">
+          <span className="h-[7px] w-[7px] rounded-full bg-ai-500" />
+          EmlyAI
         </div>
 
-        <Card className="mx-auto w-full max-w-md">
-          <CardContent className="p-6">
-            <div className="mb-8 text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600 shadow-lg shadow-violet-600/30">
-                <Sparkles size={24} />
-              </div>
+        <h1
+          className="mt-5 font-light"
+          style={{ fontFamily: "var(--font-display)", fontSize: "clamp(38px,5vw,60px)", lineHeight: 1, letterSpacing: "-0.035em" }}
+        >
+          Send smarter job applications with AI.
+        </h1>
 
-              <h2 className="text-2xl font-bold">
-                Welcome back
-              </h2>
+        <p className="mt-5 max-w-[420px] text-base leading-relaxed text-fg-muted">
+          Upload resumes, analyze postings, generate tailored emails and send from your own Gmail.
+        </p>
 
-              <p className="mt-2 text-sm text-slate-400">
-                Sign in to continue to ApplyPilot AI
-              </p>
+        <div className="mt-7 flex max-w-[420px] flex-col gap-2.5">
+          {BENEFITS.map((text, i) => (
+            <div
+              key={text}
+              className="flex items-center gap-3 rounded-2xl border border-border bg-elevated px-4 py-3.5 text-sm transition-transform hover:translate-x-1"
+            >
+              <span
+                className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-surface-sunken text-fg-muted"
+                style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}
+              >
+                {i + 1}
+              </span>
+              {text}
             </div>
+          ))}
+        </div>
+      </div>
 
-            <div className="mb-5 flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error("Google login failed")}
-                theme="filled_black"
-                shape="pill"
-                size="large"
-                text="continue_with"
+      <div className="relative mx-auto w-full max-w-[440px] justify-self-center min-[900px]:justify-self-start">
+        <div
+          className="rounded-[26px] border border-border bg-elevated p-[22px] min-[900px]:p-9"
+          style={{ boxShadow: "0 40px 80px -50px rgba(20,18,15,.4)" }}
+        >
+          <div className="flex justify-center">
+            <BrandMark size={44} className="rounded-2xl bg-brand-500 p-2.5" />
+          </div>
+
+          <h2
+            className="mt-4 text-center font-medium"
+            style={{ fontFamily: "var(--font-display)", fontSize: 26, letterSpacing: "-0.025em" }}
+          >
+            Welcome back
+          </h2>
+          <p className="mt-1.5 text-center text-sm text-fg-muted">Sign in to continue to EmlyAI</p>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error("Google login failed")}
+              theme="outline"
+              shape="pill"
+              size="large"
+              text="continue_with"
+            />
+          </div>
+
+          <div className="my-5 flex items-center gap-3 text-[11px] tracking-wide text-fg-subtle">
+            <div className="h-px flex-1 bg-border" />
+            OR
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="relative">
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-subtle" />
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={handleChange}
+                className="pl-10"
               />
             </div>
 
-            <div className="mb-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-xs text-slate-500">
-                OR
-              </span>
-              <div className="h-px flex-1 bg-white/10" />
+            <div className="relative">
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-subtle" />
+              <Input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="pl-10"
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <Mail
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-                />
+            <Button type="submit" loading={loading} className="w-full">
+              Sign in
+            </Button>
+          </form>
 
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email address"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="h-11 w-full rounded-xl border border-white/10 bg-slate-900 pl-10 pr-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500"
-                />
-              </div>
-
-              <div className="relative">
-                <Lock
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-                />
-
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="h-11 w-full rounded-xl border border-white/10 bg-slate-900 pl-10 pr-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  "Sign in"
-                )}
-              </Button>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-slate-500">
-              New here?{" "}
-              <Link
-                to="/register"
-                className="text-violet-300 hover:text-violet-200"
-              >
-                Create an account
-              </Link>
-            </p>
-
-            <Link
-              to="/landing"
-              className="mt-4 block text-center text-xs text-slate-500 hover:text-slate-300"
-            >
-              Back to landing page
+          <p className="mt-5 text-center text-sm text-fg-muted">
+            New here?{" "}
+            <Link to="/register" className="font-medium text-fg underline underline-offset-4">
+              Create an account
             </Link>
-          </CardContent>
-        </Card>
+          </p>
+
+          <Link to="/" className="mt-3.5 block text-center text-xs text-fg-subtle hover:text-fg-muted">
+            Back to landing page
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,85 @@
 @import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/hanken-grotesk/300.css";
+@import "@fontsource/hanken-grotesk/400.css";
+@import "@fontsource/hanken-grotesk/500.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+/*
+ * EmlyAI design tokens.
+ *
+ * Re-themed to the warm near-white "ElevenLabs" system from the
+ * `design_handoff_emlyai` handoff (see TASKS.md Phase 5), replacing the
+ * original dark copper/amber system. Because that original system was
+ * deliberately built token-first — the whole point of `@theme` here rather
+ * than hardcoded utility classes — this re-theme is a values-only edit:
+ * every existing `bg-canvas`/`text-fg`/`bg-brand-500`/`border-border`/etc.
+ * usage across the app re-renders in the new palette with no per-component
+ * className changes, except the handful of spots noted below where a
+ * variable's *meaning* changed (see button.jsx/Sidebar.jsx/MobileSidebar.jsx:
+ * `brand-500` used to double as "the dark canvas' most saturated accent" —
+ * safe to sit under near-white text — and now means "solid black", which
+ * needs explicit white text instead of the general-purpose `text-fg`).
+ */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Surfaces */
+  --color-canvas: #fbfaf9;
+  --color-surface: #fbfaf9;
+  --color-elevated: #ffffff;
+  --color-surface-sunken: #f4f2f0;
+  --color-border: #e7e4e0;
+  --color-border-strong: #d8d4cf;
+
+  /* Brand — solid black, the primary action/emphasis color in this system
+     (see button.jsx's `default` variant and the sidebar's active-nav pill).
+     Named `brand-*` rather than "black" so every existing call site that
+     already referenced it needed no renaming, only these value changes. */
+  --color-brand-400: #292524;
+  --color-brand-500: #14120f;
+  --color-brand-600: #000000;
+
+  /* Spark accent — the handoff's vivid orange, used sparingly for
+     "growth/upward" moments, never as general UI chrome. */
+  --color-spark-400: #ff4704;
+  --color-spark-500: #cc3800;
+
+  /* AI accent — reserved for "the system is thinking" moments (scan/glow
+     effects, staged analysis copy). The handoff's single "electric
+     blue-violet" illustration accent. */
+  --color-ai-500: #0447ff;
+  --color-ai-600: #0335c9;
+
+  /* Semantic */
+  --color-success: #1f8a4c;
+  --color-warning: #b25e09;
+  --color-danger: #d4351c;
+
+  /* Text hierarchy (on the light canvas/surfaces — NOT for text sitting on
+     a solid black surface, which needs explicit white, see the note above) */
+  --color-fg: #14120f;
+  --color-fg-muted: #6c665e;
+  --color-fg-subtle: #8b857d;
+}
+
+/*
+ * Plain (non-`@theme`) custom properties for the display-font type scale —
+ * these aren't Tailwind utility tokens, just shared sizes referenced inline
+ * (`style={{ fontSize: "var(--heading-md)" }}`) anywhere a heading needs to
+ * match the handoff's scale exactly.
+ */
+:root {
+  --heading-lg: 26px;
+  --heading-md: 20px;
+  --heading-sm: 17px;
+}
 
 html {
   scroll-behavior: smooth;
@@ -6,7 +87,8 @@ html {
 
 body {
   margin: 0;
-  background: #020617;
+  background: var(--color-canvas);
+  font-family: var(--font-sans);
 }
 
 .custom-scroll::-webkit-scrollbar {
@@ -18,10 +100,76 @@ body {
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.45);
+  background: var(--color-border-strong);
   border-radius: 999px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.75);
+  background: var(--color-fg-subtle);
+}
+
+/* --- AI visual language: used sparingly, only for real processing states --- */
+
+@keyframes emly-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.emly-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.7),
+    transparent
+  );
+  animation: emly-shimmer 1.6s ease-in-out infinite;
+  animation-delay: var(--shimmer-delay, 0ms);
+}
+
+@keyframes emly-ai-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.emly-ai-border {
+  position: relative;
+  border-color: color-mix(in srgb, var(--color-ai-500) 35%, transparent);
+}
+
+.emly-ai-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    var(--color-ai-500),
+    var(--color-ai-600),
+    var(--color-ai-500)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: emly-ai-glow 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emly-shimmer::after,
+  .emly-ai-border::before {
+    animation: none;
+  }
 }

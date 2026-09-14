@@ -6,10 +6,13 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-violet-500/30 bg-violet-500/10 text-violet-300",
-        secondary: "border-slate-700 bg-slate-800 text-slate-300",
-        outline: "border-white/10 text-slate-300",
-        destructive: "border-red-500/30 bg-red-500/10 text-red-400",
+        default: "border-brand-500/20 bg-brand-500/[0.06] text-fg",
+        ai: "border-ai-500/30 bg-ai-500/10 text-ai-500",
+        secondary: "border-border bg-surface text-fg-muted",
+        outline: "border-border text-fg-muted",
+        success: "border-success/30 bg-success/10 text-success",
+        warning: "border-warning/30 bg-warning/10 text-warning",
+        destructive: "border-danger/30 bg-danger/10 text-danger",
       },
     },
     defaultVariants: {
@@ -20,10 +23,7 @@ const badgeVariants = cva(
 
 function Badge({ className, variant = "default", ...props }) {
   return (
-    <span
-      className={cn(badgeVariants({ variant }), className)}
-      {...props}
-    />
+    <span className={cn(badgeVariants({ variant }), className)} {...props} />
   );
 }
 

@@ -3,11 +3,13 @@ import toast from "react-hot-toast";
 
 import {
   analyzeResumeApi,
+  getAnalysisHistoryApi,
   generateEmailApi,
   generateCoverLetterApi,
   selectBestResumeApi,
   oneClickApplyApi,
   previewApplicationApi,
+  chatWithAIApi,
 } from "../api/aiApi";
 import { useAuth } from "./AuthContext";
 
@@ -17,29 +19,51 @@ export const AIProvider = ({ children }) => {
   const [aiLoading, setAiLoading] = useState(false);
 
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
+  const [analysisHistoryLoading, setAnalysisHistoryLoading] = useState(false);
   const [generatedEmail, setGeneratedEmail] = useState(null);
   const [coverLetter, setCoverLetter] = useState(null);
   const [bestResume, setBestResume] = useState(null);
   const [applicationResult, setApplicationResult] = useState(null);
   const [applicationPreview, setApplicationPreview] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
   const { user } = useAuth();
 
   const clearAIResults = () => {
   setAnalysisResult(null);
+  setAnalysisHistory([]);
   setGeneratedEmail(null);
   setCoverLetter(null);
   setBestResume(null);
   setApplicationResult(null);
   setApplicationPreview(null);
+  setChatMessages([]);
 };
 
+  const fetchAnalysisHistory = async () => {
+    try {
+      setAnalysisHistoryLoading(true);
+      const { data } = await getAnalysisHistoryApi();
+      setAnalysisHistory(data.analyses || []);
+      return data.analyses;
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch analysis history");
+      return [];
+    } finally {
+      setAnalysisHistoryLoading(false);
+    }
+  };
+
 useEffect(() => {
-  if (!user) {
+  if (user) {
+    fetchAnalysisHistory();
+  } else {
     clearAIResults();
   }
 }, [user]);
 
-  const analyzeResume = async ({ resumeId, jobDescription }) => {
+  const analyzeResume = async ({ resumeId, jobDescription, companyName, jobTitle }) => {
     try {
       if (!resumeId || !jobDescription?.trim()) {
         toast.error("Resume and job description are required");
@@ -51,9 +75,12 @@ useEffect(() => {
       const { data } = await analyzeResumeApi({
         resumeId,
         jobDescription,
+        companyName,
+        jobTitle,
       });
 
       setAnalysisResult(data.analysis);
+      fetchAnalysisHistory();
       toast.success("Resume analyzed successfully");
 
       return data.analysis;
@@ -201,13 +228,40 @@ useEffect(() => {
     }
   };
 
+  // `history` is the conversation BEFORE this new message — the backend
+  // appends `message` itself, so the message being sent isn't duplicated.
+  const sendChatMessage = async (message) => {
+    const trimmed = message?.trim();
+    if (!trimmed) return;
 
+    const history = chatMessages;
+    setChatMessages((prev) => [...prev, { role: "user", text: trimmed }]);
+    setChatLoading(true);
+
+    try {
+      const { data } = await chatWithAIApi({ message: trimmed, history });
+      setChatMessages((prev) => [...prev, { role: "assistant", text: data.reply }]);
+    } catch (error) {
+      toast.error(error.message || "EmlyAI couldn't reply — try again");
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "Sorry, something went wrong. Please try again.", failed: true },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const clearChat = () => setChatMessages([]);
 
   return (
     <AIContext.Provider
       value={{
         aiLoading,
         analysisResult,
+        analysisHistory,
+        analysisHistoryLoading,
+        fetchAnalysisHistory,
         generatedEmail,
         coverLetter,
         bestResume,
@@ -221,6 +275,10 @@ useEffect(() => {
         applicationPreview,
         previewApplication,
         setApplicationPreview,
+        chatMessages,
+        chatLoading,
+        sendChatMessage,
+        clearChat,
       }}
     >
       {children}

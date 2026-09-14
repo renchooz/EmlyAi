@@ -6,7 +6,7 @@ function Input({ className, type = "text", ...props }) {
     <InputPrimitive
       type={type}
       className={cn(
-        "h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50",
+        "h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 disabled:opacity-50",
         className
       )}
       {...props}

@@ -1,23 +1,24 @@
-import LandingNavbar from "../components/landing/LandingNavbar";
-import HeroSection from "../components/landing/HeroSection";
-import FeaturesSection from "../components/landing/FeaturesSection";
-import DashboardPreviewSection from "../components/landing/DashboardPreviewSection";
-import HowItWorksSection from "../components/landing/HowItWorksSection";
-import FAQSection from "../components/landing/FAQSection";
-import FinalCTASection from "../components/landing/FinalCTASection";
+import "../styles/landing.css";
+import { ScrollProgressBar } from "../components/landing/ScrollProgressBar";
+import { LandingHeader } from "../components/landing/LandingHeader";
+import { HeroSection } from "../components/landing/HeroSection";
+import { StatsMarquee } from "../components/landing/StatsMarquee";
+import { WhySection } from "../components/landing/WhySection";
+import { PricingSection } from "../components/landing/PricingSection";
+import { FAQSection } from "../components/landing/FAQSection";
+import { FinalCTASection } from "../components/landing/FinalCTASection";
 import Footer from "../components/landing/Footer";
-import StatsSection from "../components/landing/StatsSection";
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-slate-950">
-      <LandingNavbar />
+    <div className="landing-root min-h-screen">
+      <ScrollProgressBar />
+      <LandingHeader />
       <HeroSection />
-      <StatsSection/>
-      <FeaturesSection />
-       <HowItWorksSection />
-      <DashboardPreviewSection />
-       <FAQSection />
+      <StatsMarquee />
+      <WhySection />
+      <PricingSection />
+      <FAQSection />
       <FinalCTASection />
       <Footer />
     </div>

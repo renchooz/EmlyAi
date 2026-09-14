@@ -3,24 +3,21 @@ import { Outlet } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
-import MobileSidebar from "../components/MobileSidebar";
 
 const DashboardLayout = () => {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <Sidebar />
+    // No grid below 900px — the sidebar is `fixed` there (see Sidebar.jsx),
+    // and a fixed item drops out of grid flow entirely, which would
+    // collapse this content column back into the sidebar's own track.
+    <div className="min-h-screen bg-canvas text-fg min-[900px]:grid min-[900px]:grid-cols-[268px_minmax(0,1fr)]">
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
 
-      <MobileSidebar
-        open={mobileSidebarOpen}
-        onClose={() => setMobileSidebarOpen(false)}
-      />
+      <div className="min-w-0">
+        <Navbar navOpen={navOpen} onToggleNav={() => setNavOpen((o) => !o)} />
 
-      <div className="min-h-screen lg:pl-72">
-        <Navbar onMenuClick={() => setMobileSidebarOpen(true)} />
-
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="px-[18px] pt-[22px] pb-10 min-[900px]:p-8">
           <Outlet />
         </main>
       </div>

@@ -1,46 +1,48 @@
-import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Reveal } from "./Reveal";
 
-const FinalCTASection = () => {
+export function FinalCTASection() {
   return (
-    <section className="relative overflow-hidden bg-slate-950 px-4 py-24 text-white">
-      <div className="absolute left-1/2 top-1/2 h-[420px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-600/20 blur-[120px]" />
-
-      <div className="relative mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/[0.05] p-8 text-center backdrop-blur md:p-14">
-        <Badge className="mb-6">
-          <Sparkles size={14} />
-          Built for faster job applications
-        </Badge>
-
-        <h2 className="text-3xl font-bold md:text-5xl">
-          Stop writing every application manually.
-        </h2>
-
-        <p className="mx-auto mt-5 max-w-2xl text-slate-400">
-          Upload your resumes, paste the job description, let AI choose the
-          best resume, generate a tailored email and send it directly from
-          Gmail.
-        </p>
-
-        <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link to="/login">
-            <Button size="lg">
+    <section className="px-[18px] pb-12 min-[700px]:px-8">
+      <Reveal
+        className="relative mx-auto max-w-[1300px] overflow-hidden rounded-[32px] px-[22px] py-[60px] text-center min-[700px]:px-10 min-[700px]:py-24"
+        style={{ background: "var(--el-black)", color: "var(--el-text-on-dark)" }}
+      >
+        <img
+          src="/landing/orb-sunset.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute hidden sm:block"
+          style={{
+            left: "50%",
+            bottom: -320,
+            transform: "translateX(-50%)",
+            width: 720,
+            opacity: 0.48,
+            filter: "blur(4px)",
+            animation: "el-orb 30s ease-in-out infinite",
+          }}
+        />
+        <div className="relative">
+          <h2
+            className="mx-auto max-w-[680px] font-light"
+            style={{ fontFamily: "var(--el-font-display)", fontSize: "clamp(32px,4.6vw,58px)", lineHeight: 1.02, letterSpacing: "-0.032em" }}
+          >
+            Your next application, already written
+          </h2>
+          <p className="mx-auto mt-5 max-w-[440px] text-base" style={{ color: "var(--el-text-on-dark-muted)" }}>
+            Connect Gmail, upload your resumes, paste a posting. That's the whole setup.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link to="/register" className="el-btn el-btn-lg el-btn-inverse">
               Start applying free
-              <ArrowRight size={18} />
-            </Button>
-          </Link>
-
-          <a href="#features">
-            <Button size="lg" variant="outline">
-              View features
-            </Button>
-          </a>
+            </Link>
+            <a href="#demo" className="el-btn el-btn-lg el-btn-inverse-ghost">
+              See the demo again
+            </a>
+          </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
-};
-
-export default FinalCTASection;
+}

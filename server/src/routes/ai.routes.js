@@ -6,7 +6,9 @@ import {
   analyzeResume,
   generateCoverLetterController,
   generateEmail,
-  selectBestResumeController
+  selectBestResumeController,
+  getAnalysisHistory,
+  chatWithAI
 } from "../controllers/ai.controller.js";
 
 const router = express.Router();
@@ -15,6 +17,12 @@ router.post(
   "/analyze",
   protect,
   analyzeResume
+);
+
+router.get(
+  "/analyses",
+  protect,
+  getAnalysisHistory
 );
 
 router.post(
@@ -35,4 +43,11 @@ router.post(
   protect,
   selectBestResumeController
 );
+
+router.post(
+  "/chat",
+  protect,
+  chatWithAI
+);
+
 export default router;

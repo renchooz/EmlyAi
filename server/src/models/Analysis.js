@@ -14,7 +14,19 @@ const analysisSchema = new mongoose.Schema(
 
     jobDescription: String,
 
+    companyName: String,
+
+    jobTitle: String,
+
     matchScore: Number,
+
+    atsScore: Number,
+
+    skillMatchScore: Number,
+
+    experienceMatchScore: Number,
+
+    keywordMatchScore: Number,
 
     strengths: [String],
 

@@ -7,11 +7,13 @@ import LandingPage from "../pages/LandingPage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
+import EmlyChat from "../pages/EmlyChat";
 import Resumes from "../pages/Resumes";
 import Analyze from "../pages/Analyze";
 import CoverLetter from "../pages/CoverLetter";
 import OneClickApply from "../pages/OneClickApply";
 import EmailHistory from "../pages/EmailHistory";
+import LatestJobs from "../pages/LatestJobs";
 import Settings from "../pages/Settings";
 
 const AppRoutes = () => {
@@ -29,11 +31,13 @@ const AppRoutes = () => {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/chat" element={<EmlyChat />} />
         <Route path="/resumes" element={<Resumes />} />
         <Route path="/analyze" element={<Analyze />} />
         <Route path="/cover-letter" element={<CoverLetter />} />
         <Route path="/one-click-apply" element={<OneClickApply />} />
         <Route path="/email-history" element={<EmailHistory />} />
+        <Route path="/latest-jobs" element={<LatestJobs />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
 

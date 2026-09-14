@@ -1,180 +1,109 @@
-import {
-  Mail,
-  CheckCircle2,
-  AlertCircle,
-  RefreshCw,
-  LogOut,
-  Shield,
-  User,
-} from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
 import { useGmail } from "../context/GmailContext";
 
+import PageHeader from "../components/PageHeader";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
+
+const FieldTile = ({ label, value }) => (
+  <label className="block rounded-2xl border border-border bg-surface-sunken px-4 py-3.5">
+    <span className="block text-xs text-fg-subtle">{label}</span>
+    <span className="mt-1.5 block text-base text-fg">{value || "N/A"}</span>
+  </label>
+);
 
 const Settings = () => {
   const { user, logout } = useAuth();
-
-  const {
-    gmailConnected,
-    gmailEmail,
-    connectGmail,
-    gmailLoading,
-  } = useGmail();
+  const { gmailConnected, gmailEmail, connectGmail, gmailLoading } = useGmail();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <Badge className="mb-3">
-          <Shield size={14} />
-          Settings
-        </Badge>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Settings"
+        title="Account settings"
+        sub="Manage Gmail integration, account details and session."
+      />
 
-        <h1 className="text-3xl font-bold text-white md:text-4xl">
-          Account Settings
-        </h1>
+      <div className="grid gap-3.5 lg:grid-cols-2 lg:items-start">
+        <Card>
+          <CardContent className="p-[26px]">
+            <h2
+              className="font-medium text-fg"
+              style={{ fontFamily: "var(--font-display)", fontSize: "var(--heading-md)", letterSpacing: "-0.014em" }}
+            >
+              Account information
+            </h2>
+            <p className="mt-1 text-sm text-fg-muted">Your registered account details.</p>
 
-        <p className="mt-2 max-w-2xl text-slate-400">
-          Manage Gmail integration, account details and application settings.
-        </p>
-      </div>
-
-      {/* Account Card */}
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
-              <User size={24} />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <FieldTile label="Name" value={user?.name} />
+              <FieldTile label="Email" value={user?.email} />
             </div>
+          </CardContent>
+        </Card>
 
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Account Information
-              </h2>
+        <Card>
+          <CardContent className="flex h-full flex-col p-[26px]">
+            <h2
+              className="font-medium text-fg"
+              style={{ fontFamily: "var(--font-display)", fontSize: "var(--heading-md)", letterSpacing: "-0.014em" }}
+            >
+              Gmail integration
+            </h2>
+            <p className="mt-1 text-sm text-fg-muted">Used to send applications from your own address.</p>
 
-              <p className="text-sm text-slate-400">
-                Your registered account details
-              </p>
-            </div>
-          </div>
+            <div className="mt-5 flex flex-1 flex-col gap-4 rounded-[18px] border border-border bg-surface-sunken p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <span
+                  className={`inline-block rounded-full border border-border bg-elevated px-2.5 py-1 text-[11px] font-semibold ${
+                    gmailConnected ? "text-success" : "text-warning"
+                  }`}
+                >
+                  {gmailConnected ? "CONNECTED" : "NOT CONNECTED"}
+                </span>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-sm text-slate-500">
-                Name
-              </p>
-
-              <p className="mt-1 text-white">
-                {user?.name || "N/A"}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-sm text-slate-500">
-                Email
-              </p>
-
-              <p className="mt-1 text-white">
-                {user?.email || "N/A"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Gmail Card */}
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300">
-              <Mail size={24} />
-            </div>
-
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Gmail Integration
-              </h2>
-
-              <p className="text-sm text-slate-400">
-                Used for sending applications from your Gmail
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="mb-2">
-                  {gmailConnected ? (
-                    <Badge>
-                      <CheckCircle2 size={13} />
-                      Connected
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive">
-                      <AlertCircle size={13} />
-                      Not Connected
-                    </Badge>
-                  )}
-                </div>
-
-                <h3 className="text-lg font-semibold text-white">
-                  {gmailConnected
-                    ? gmailEmail
-                    : "No Gmail account connected"}
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-2.5 truncate text-base font-medium text-fg">
+                  {gmailConnected ? gmailEmail : "No Gmail account connected"}
+                </p>
+                <p className="mt-1 text-sm text-fg-muted">
                   {gmailConnected
                     ? "Applications will be sent from this Gmail account."
-                    : "Connect Gmail to enable email sending."}
+                    : "Google OAuth — no app password needed."}
                 </p>
               </div>
 
-              <Button
-                onClick={connectGmail}
-                disabled={gmailLoading}
-              >
-                <RefreshCw size={18} />
-                {gmailConnected
-                  ? "Reconnect Gmail"
-                  : "Connect Gmail"}
+              <Button onClick={connectGmail} loading={gmailLoading} className="shrink-0">
+                <RefreshCw size={16} />
+                {gmailConnected ? "Reconnect Gmail" : "Connect Gmail"}
               </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Logout */}
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <Card className="lg:col-span-2">
+          <CardContent className="flex flex-col gap-4 p-[26px] sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-white">
-                Logout
+              <h2
+                className="font-medium text-fg"
+                style={{ fontFamily: "var(--font-display)", fontSize: "var(--heading-md)", letterSpacing: "-0.014em" }}
+              >
+                Log out
               </h2>
-
-              <p className="mt-1 text-sm text-slate-400">
-                Sign out from your account securely.
-              </p>
+              <p className="mt-1 text-sm text-fg-muted">Sign out of this device securely.</p>
             </div>
 
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={logout}
+              className="shrink-0 border-border-strong text-danger hover:bg-danger/10 hover:border-danger/30"
             >
-              <LogOut size={18} />
-              Logout
+              Log out
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,115 +1,78 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "../../lib/utils";
+import { Reveal } from "./Reveal";
 
-const faqs = [
+const FAQS = [
   {
-    question: "Does EmlyAi send emails from my Gmail?",
-    answer:
-      "Yes. Once you connect Gmail using Google OAuth, emails are sent from your own Gmail account with your selected resume attached.",
+    q: "Does EmlyAI send from my own Gmail?",
+    a: "Yes. Google OAuth connects your account and each application is sent from your address with the selected resume attached — no app password, no third-party sender.",
   },
   {
-    question: "Do I need to create a Gmail app password?",
-    answer:
-      "No. EmlyAi uses Google OAuth, so users do not need to enable app passwords or change Gmail settings.",
+    q: "Can I upload multiple resumes?",
+    a: "Yes, and you should. EmlyAI scores every version against the posting and attaches the one most likely to pass screening.",
   },
   {
-    question: "Can I upload multiple resumes?",
-    answer:
-      "Yes. You can upload multiple resumes and the AI can automatically select the best one based on the job description.",
+    q: "Can I edit the draft before sending?",
+    a: "Nothing sends without your click. Subject, body and attachment are all editable.",
   },
   {
-    question: "Can I generate a cover letter?",
-    answer:
-      "Yes. The app can generate both tailored job application emails and cover letters using your resume and the job description.",
-  },
-  {
-    question: "Is this a job portal?",
-    answer:
-      "No. It is an AI resume sender. You provide the job description and HR email, and the app helps you prepare and send the application faster.",
+    q: "Does it write cover letters?",
+    a: "Yes — a matching cover letter is generated on request for postings that ask for one.",
   },
 ];
 
-const FAQSection = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+export function FAQSection() {
+  const [open, setOpen] = useState(0);
 
   return (
-    <section id="faq" className="bg-slate-950 px-4 py-24 text-white">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-12 text-center">
-          <p className="mb-3 text-sm font-medium uppercase tracking-widest text-violet-400">
-            FAQ
-          </p>
-
-          <h2 className="text-3xl font-bold md:text-5xl">
-            Questions before you start?
-          </h2>
-
-          <p className="mt-4 text-slate-400">
-            Quick answers about Gmail, resumes, AI analysis and email sending.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {faqs.map((faq, index) => {
-            const isOpen = activeIndex === index;
-
+    <section id="faq" className="px-[18px] pt-[84px] pb-[96px] min-[700px]:px-8">
+      <div className="mx-auto max-w-[880px]">
+        <Reveal
+          as="h2"
+          className="mb-8 font-light"
+          style={{ fontFamily: "var(--el-font-display)", fontSize: "clamp(28px,3.2vw,42px)", letterSpacing: "-0.028em" }}
+        >
+          Questions before you start
+        </Reveal>
+        <div className="flex flex-col gap-2.5">
+          {FAQS.map((item, i) => {
+            const isOpen = open === i;
             return (
-              <motion.div
-                key={faq.question}
-                layout
-                className={cn(
-                  "overflow-hidden rounded-2xl border backdrop-blur transition-colors",
-                  isOpen
-                    ? "border-violet-500/40 bg-violet-500/[0.06]"
-                    : "border-white/10 bg-white/[0.04]"
-                )}
-              >
+              <Reveal key={item.q} className="el-card overflow-hidden">
                 <button
-                  onClick={() => setActiveIndex(isOpen ? null : index)}
-                  className="flex w-full items-center justify-between gap-4 p-5 text-left"
+                  type="button"
+                  onClick={() => setOpen(isOpen ? -1 : i)}
+                  className="flex w-full items-center gap-4 px-[22px] py-[19px] text-left text-base font-medium"
+                  aria-expanded={isOpen}
                 >
-                  <span className="font-medium">{faq.question}</span>
-
-                  <motion.div
-                    animate={{ rotate: isOpen ? 180 : 0 }}
-                    transition={{ duration: 0.25 }}
+                  <span className="flex-1">{item.q}</span>
+                  <span
+                    className="flex-none text-[22px] leading-none"
+                    style={{
+                      color: "var(--el-text-tertiary)",
+                      transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
+                      transition: "transform .3s cubic-bezier(.2,0,0,1)",
+                    }}
                   >
-                    <ChevronDown
-                      className={cn(
-                        "shrink-0 transition-colors",
-                        isOpen ? "text-violet-300" : "text-slate-400"
-                      )}
-                    />
-                  </motion.div>
+                    +
+                  </span>
                 </button>
-
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      key="content"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{
-                        height: { duration: 0.28, ease: "easeOut" },
-                        opacity: { duration: 0.2 },
-                      }}
-                    >
-                      <div className="px-5 pb-5 text-sm leading-6 text-slate-400">
-                        {faq.answer}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                <div
+                  style={{
+                    maxHeight: isOpen ? 220 : 0,
+                    opacity: isOpen ? 1 : 0,
+                    overflow: "hidden",
+                    transition: "max-height .34s cubic-bezier(.2,0,0,1), opacity .24s ease",
+                  }}
+                >
+                  <p className="px-[22px] pb-5 text-sm" style={{ lineHeight: 1.7, color: "var(--el-text-secondary)" }}>
+                    {item.a}
+                  </p>
+                </div>
+              </Reveal>
             );
           })}
         </div>
       </div>
     </section>
   );
-};
-
-export default FAQSection;
+}
