@@ -6,11 +6,25 @@ import generateToken from "../utils/generateToken.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// Frontend and backend are on different domains in production (e.g. a
+// Vercel-hosted client + a Render-hosted API) — that's a genuinely
+// cross-site request, and a cookie needs `SameSite=None` (plus the
+// `Secure` that requires, since browsers reject `SameSite=None` without
+// it) to be sent back on those requests at all. Locally, frontend and
+// backend are both on `localhost` (same-site, just different ports) and
+// served over plain HTTP, where `Secure` cookies wouldn't even be set —
+// so this only switches to the cross-site-safe settings in production.
+const isProd = process.env.NODE_ENV === "production";
+
+const authCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax"
+};
+
 const sendTokenCookie = (res, token) => {
   res.cookie("token", token, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    ...authCookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 };
@@ -170,11 +184,9 @@ export const googleLogin = async (req, res) => {
 };
 
 export const logoutUser = async (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax"
-  });
+  // Must match sendTokenCookie's options exactly, or the browser won't
+  // recognize this as clearing the same cookie it set.
+  res.clearCookie("token", authCookieOptions);
 
   res.status(200).json({
     success: true,
